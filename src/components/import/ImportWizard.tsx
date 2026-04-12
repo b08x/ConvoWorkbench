@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { useGraph } from '@/src/contexts/GraphContext';
 import { useProvider } from '@/src/contexts/ProviderContext';
 import { parseClaudeExport, parseChatGPTExport } from '@/src/lib/graph/builder';
-import { extractTopics } from '@/src/lib/graph/topic_extraction';
+import { extractTopics, TopicExtractionProgress } from '@/src/lib/graph/topic_extraction';
 import { ConversationNode } from '@/src/types/graph';
 import { Button } from '@/src/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
-import { Upload, FileJson, CheckCircle2, AlertCircle, Loader2, Network } from 'lucide-react';
+import { Upload, FileJson, CheckCircle2, AlertCircle, Loader2, Network, Clock, Tag } from 'lucide-react';
 import { Checkbox } from '@/src/components/ui/checkbox';
 import { Label } from '@/src/components/ui/label';
 
@@ -18,6 +18,7 @@ export function ImportWizard() {
   const [status, setStatus] = useState<'idle' | 'parsing' | 'extracting' | 'success' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [shouldExtractTopics, setShouldExtractTopics] = useState(false);
+  const [topicLogs, setTopicLogs] = useState<TopicExtractionProgress[]>([]);
 
   const handleFileChange = (key: string, file: File) => {
     const reader = new FileReader();
@@ -30,6 +31,7 @@ export function ImportWizard() {
 
   const handleImport = async () => {
     setStatus('parsing');
+    setTopicLogs([]);
     try {
       let graph;
       if (source === 'claude') {
@@ -50,7 +52,9 @@ export function ImportWizard() {
         
         if (provider && (apiKey || config.providerId === 'ollama')) {
           const conversations = Object.values(graph.conversations).slice(0, 50) as ConversationNode[]; // Limit for v1
-          const topics = await extractTopics(conversations, provider, apiKey, config);
+          const topics = await extractTopics(conversations, provider, apiKey, config, (progress) => {
+            setTopicLogs(prev => [progress, ...prev]);
+          });
           topics.forEach(t => {
             graph.topics[t.id] = t;
           });
@@ -168,6 +172,34 @@ export function ImportWizard() {
                 </div>
               </div>
             </div>
+
+            {topicLogs.length > 0 && (
+              <div className="space-y-3 bg-zinc-50 p-4 rounded-lg border border-zinc-200 max-h-64 overflow-y-auto">
+                <h4 className="text-xs font-mono uppercase tracking-wider text-zinc-500 flex items-center gap-2">
+                  <Network className="w-3 h-3" /> Extraction Progress
+                </h4>
+                <div className="space-y-2">
+                  {topicLogs.map((log, i) => (
+                    <div key={i} className="text-xs border-l-2 border-zinc-300 pl-3 py-1 space-y-1">
+                      <div className="flex items-center justify-between text-zinc-400">
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {new Date(log.timestamp).toLocaleTimeString()}
+                        </span>
+                        <span className="font-mono text-[10px] uppercase">Topic Extracted</span>
+                      </div>
+                      <div className="font-semibold text-zinc-900 flex items-center gap-1">
+                        <Tag className="w-3 h-3" />
+                        {log.topic.label}
+                      </div>
+                      <div className="text-zinc-500 italic">
+                        {log.convoTitles.join(', ')}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <Button 
               className="w-full" 

@@ -12,55 +12,73 @@ export class OllamaAdapter implements ModelProvider {
 
   async generate(prompt: GenerationPrompt, apiKey: string, modelId: string): Promise<GenerationResult> {
     const baseUrl = this.getBaseUrl(apiKey);
-    const response = await fetch(`${baseUrl}/api/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: modelId,
-        prompt: prompt.user,
-        system: prompt.system,
-        stream: false,
-        format: prompt.schema ? 'json' : undefined,
-      })
-    });
+    try {
+      const response = await fetch(`${baseUrl}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: modelId,
+          prompt: prompt.user,
+          system: prompt.system,
+          stream: false,
+          format: prompt.schema ? 'json' : undefined,
+        })
+      });
 
-    if (!response.ok) throw new Error('Failed to generate with Ollama');
-    const data = await response.json();
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Ollama error (${response.status}): ${errorText}`);
+      }
+      
+      const data = await response.json();
 
-    return { 
-      text: data.response,
-      object: prompt.schema ? JSON.parse(data.response) : undefined
-    };
+      return { 
+        text: data.response,
+        object: prompt.schema ? JSON.parse(data.response) : undefined
+      };
+    } catch (e) {
+      console.error('Ollama generation failed:', e);
+      throw new Error(`Ollama connection failed. Ensure Ollama is running and OLLAMA_ORIGINS="*" is set. Error: ${e instanceof Error ? e.message : String(e)}`);
+    }
   }
 
   async *stream(prompt: GenerationPrompt, apiKey: string, modelId: string): AsyncGenerator<string> {
     const baseUrl = this.getBaseUrl(apiKey);
-    const response = await fetch(`${baseUrl}/api/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: modelId,
-        prompt: prompt.user,
-        system: prompt.system,
-        stream: true,
-      })
-    });
+    try {
+      const response = await fetch(`${baseUrl}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: modelId,
+          prompt: prompt.user,
+          system: prompt.system,
+          stream: true,
+        })
+      });
 
-    if (!response.ok) throw new Error('Failed to stream with Ollama');
-    const reader = response.body?.getReader();
-    if (!reader) return;
-
-    const decoder = new TextDecoder();
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n');
-      for (const line of lines) {
-        if (!line) continue;
-        const data = JSON.parse(line);
-        yield data.response || '';
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Ollama stream error (${response.status}): ${errorText}`);
       }
+
+      const reader = response.body?.getReader();
+      if (!reader) return;
+
+      const decoder = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+        for (const line of lines) {
+          if (!line) continue;
+          const data = JSON.parse(line);
+          yield data.response || '';
+        }
+      }
+    } catch (e) {
+      console.error('Ollama streaming failed:', e);
+      throw new Error(`Ollama connection failed. Ensure Ollama is running and OLLAMA_ORIGINS="*" is set. Error: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
 
@@ -68,7 +86,10 @@ export class OllamaAdapter implements ModelProvider {
     const baseUrl = this.getBaseUrl(apiKey);
     try {
       const response = await fetch(`${baseUrl}/api/tags`);
-      if (!response.ok) return [];
+      if (!response.ok) {
+        console.warn(`Ollama returned status ${response.status} for /api/tags`);
+        return [];
+      }
       const data = await response.json();
       return data.models.map((m: any) => ({
         id: m.name,
@@ -80,7 +101,7 @@ export class OllamaAdapter implements ModelProvider {
         }
       }));
     } catch (e) {
-      console.error('Ollama not running or unreachable');
+      console.error('Ollama connection failed. Ensure Ollama is running and OLLAMA_ORIGINS="*" is set for CORS support.', e);
       return [];
     }
   }
