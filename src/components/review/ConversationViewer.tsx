@@ -4,7 +4,7 @@ import { useProvider } from '@/src/contexts/ProviderContext';
 import { cn } from '@/src/lib/utils';
 import { 
   MessageSquare, User, Bot, Clock, Tag, CheckSquare, 
-  Square, Sparkles, Search, X, Loader2, Copy 
+  Square, Sparkles, Search, X, Loader2, Copy, FileText 
 } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { Card } from '@/src/components/ui/card';
@@ -16,13 +16,30 @@ interface ConversationViewerProps {
 }
 
 export function ConversationViewer({ conversationId }: ConversationViewerProps) {
-  const { state } = useGraph();
+  const { state, dispatch } = useGraph();
   const { getProvider, apiKeys } = useProvider();
   const conversation = conversationId ? state.conversations[conversationId] : null;
   
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
   const [actionResult, setActionResult] = React.useState<{ type: 'summary' | 'search', content: string } | null>(null);
   const [loading, setLoading] = React.useState(false);
+  const [loadingText, setLoadingText] = React.useState('Analyzing');
+
+  const verbs = ['Synthesizing', 'Distilling', 'Analyzing', 'Retrieving', 'Contextualizing', 'Extracting'];
+
+  React.useEffect(() => {
+    let interval: any;
+    if (loading) {
+      let i = 0;
+      interval = setInterval(() => {
+        setLoadingText(verbs[i % verbs.length]);
+        i++;
+      }, 800);
+    } else {
+      setLoadingText('Analyzing');
+    }
+    return () => clearInterval(interval);
+  }, [loading]);
 
   const toggleSelection = (id: string) => {
     const next = new Set(selectedIds);
@@ -88,6 +105,27 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSaveToNotes = () => {
+    if (!conversationId || !actionResult) return;
+    
+    const currentNotes = conversation?.notes || '';
+    const header = actionResult.type === 'summary' ? '### AI Summary' : '### Search Terms';
+    const newNotes = currentNotes 
+      ? `${currentNotes}\n\n${header}\n${actionResult.content}`
+      : `${header}\n${actionResult.content}`;
+
+    dispatch({
+      type: 'UPDATE_CONVERSATION_RATING',
+      payload: { 
+        id: conversationId, 
+        rating: conversation?.rating || null, 
+        notes: newNotes 
+      }
+    });
+    setActionResult(null);
+    clearSelection();
   };
 
   if (!conversation) {
@@ -193,7 +231,7 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
                 disabled={loading}
               >
                 {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                Summarize
+                {loading ? `${loadingText}...` : 'Summarize'}
               </Button>
               <Button 
                 variant="ghost" 
@@ -202,7 +240,7 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
                 disabled={loading}
               >
                 {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
-                Search & Retrieve
+                {loading ? `${loadingText}...` : 'Search & Retrieve'}
               </Button>
               <Button 
                 variant="ghost" 
@@ -246,6 +284,12 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
                   }}
                 >
                   <Copy className="w-3 h-3" /> Copy
+                </Button>
+                <Button 
+                  className="text-xs bg-brand-pink text-brand-bg hover:bg-brand-pink/90 h-8"
+                  onClick={handleSaveToNotes}
+                >
+                  <FileText className="w-3 h-3" /> Save to Notes
                 </Button>
                 <Button 
                   className="text-xs bg-brand-orange text-brand-bg hover:bg-brand-orange/90 h-8"
