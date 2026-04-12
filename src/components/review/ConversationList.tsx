@@ -13,6 +13,7 @@ export function ConversationList({ selectedId, onSelect }: ConversationListProps
   const { state } = useGraph();
   const [filter, setFilter] = useState<RatingFilter>('all');
   const [search, setSearch] = useState('');
+  const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
 
   const conversations = (Object.values(state.conversations) as any[]).filter((c) => {
     const matchesSearch = c.title?.toLowerCase().includes(search.toLowerCase()) || c.id.includes(search);
@@ -21,7 +22,20 @@ export function ConversationList({ selectedId, onSelect }: ConversationListProps
       (filter === 'unrated' && c.rating === null) ||
       (filter === 'rated' && c.rating !== null) ||
       (filter === 'issues' && (c.rating?.tone === 'inappropriate' || c.rating?.format === 'bad'));
-    return matchesSearch && matchesFilter;
+    
+    let matchesDate = true;
+    if (c.created_at) {
+      if (dateRange.start) {
+        matchesDate = matchesDate && c.created_at >= new Date(dateRange.start).getTime();
+      }
+      if (dateRange.end) {
+        matchesDate = matchesDate && c.created_at <= new Date(dateRange.end).getTime();
+      }
+    } else if (dateRange.start || dateRange.end) {
+      matchesDate = false; // If filtering by date but convo has no date
+    }
+
+    return matchesSearch && matchesFilter && matchesDate;
   });
 
   return (
@@ -37,6 +51,35 @@ export function ConversationList({ selectedId, onSelect }: ConversationListProps
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+        
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-mono uppercase text-muted-foreground">Date Range</label>
+            {(dateRange.start || dateRange.end) && (
+              <button 
+                onClick={() => setDateRange({ start: '', end: '' })}
+                className="text-[10px] text-brand-orange hover:underline"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <input 
+              type="date" 
+              className="bg-muted/30 border border-border/50 rounded px-2 py-1 text-[10px] text-foreground focus:outline-none focus:ring-1 focus:ring-brand-orange/30"
+              value={dateRange.start}
+              onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+            />
+            <input 
+              type="date" 
+              className="bg-muted/30 border border-border/50 rounded px-2 py-1 text-[10px] text-foreground focus:outline-none focus:ring-1 focus:ring-brand-orange/30"
+              value={dateRange.end}
+              onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+            />
+          </div>
+        </div>
+
         <div className="flex gap-1 p-1 bg-muted rounded-lg border border-border/30">
           {(['all', 'unrated', 'rated', 'issues'] as const).map((f) => (
             <button

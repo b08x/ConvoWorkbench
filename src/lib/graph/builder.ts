@@ -110,6 +110,7 @@ export function parseClaudeExport(
       messages: messageIds,
       rating: null,
       notes: '',
+      created_at: c.created_at ? new Date(c.created_at).getTime() : null,
     };
   });
 
@@ -176,6 +177,7 @@ export function parseChatGPTExport(conversationsJson: string): ConvoGraph {
       messages: messageIds,
       rating: null,
       notes: '',
+      created_at: c.create_time ? c.create_time * 1000 : null,
     };
   });
 

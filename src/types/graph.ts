@@ -26,6 +26,7 @@ export interface ConversationNode {
   messages: string[]; // MessageNode ids, ordered
   rating: ConversationRating | null;
   notes: string;
+  created_at: number | null;
 }
 
 export interface TopicNode {
