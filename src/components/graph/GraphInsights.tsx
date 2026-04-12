@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import * as React from 'react';
 import { useGraph } from '@/src/contexts/GraphContext';
 import { useProvider } from '@/src/contexts/ProviderContext';
 import { Button } from '@/src/components/ui/button';
@@ -10,8 +10,8 @@ import { TopicNode, SkillNode } from '@/src/types/graph';
 export function GraphInsights() {
   const { state } = useGraph();
   const { getProvider, apiKeys } = useProvider();
-  const [insight, setInsight] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [insight, setInsight] = React.useState<string | null>(null);
+  const [loading, setLoading] = React.useState(false);
 
   const generateInsights = async () => {
     setLoading(true);

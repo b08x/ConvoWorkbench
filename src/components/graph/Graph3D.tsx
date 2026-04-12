@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useCallback } from 'react';
+import * as React from 'react';
 import ForceGraph3D, { ForceGraphMethods } from 'react-force-graph-3d';
 import { ConvoGraph } from '@/src/types/graph';
 import * as THREE from 'three';
@@ -8,9 +8,9 @@ interface Graph3DProps {
 }
 
 export function Graph3D({ graph }: Graph3DProps) {
-  const fgRef = useRef<ForceGraphMethods>(null);
+  const fgRef = React.useRef<ForceGraphMethods>(null);
 
-  const data = useMemo(() => {
+  const data = React.useMemo(() => {
     const nodes: any[] = [];
     const links: any[] = [];
 
@@ -85,7 +85,7 @@ export function Graph3D({ graph }: Graph3DProps) {
     return { nodes, links };
   }, [graph]);
 
-  const nodeThreeObject = useCallback((node: any) => {
+  const nodeThreeObject = React.useCallback((node: any) => {
     const group = new THREE.Group();
     
     // Main sphere
