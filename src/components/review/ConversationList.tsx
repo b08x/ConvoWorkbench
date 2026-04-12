@@ -25,26 +25,26 @@ export function ConversationList({ selectedId, onSelect }: ConversationListProps
   });
 
   return (
-    <div className="w-80 border-r border-zinc-200 bg-white flex flex-col h-full">
-      <div className="p-4 border-b border-zinc-200 space-y-4">
+    <div className="w-80 border-r border-border bg-card flex flex-col h-full">
+      <div className="p-4 border-b border-border space-y-4">
         <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-400" />
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search conversations..."
-            className="w-full pl-9 pr-4 py-2 text-sm border border-zinc-200 rounded-md focus:outline-none focus:ring-2 focus:ring-zinc-950"
+            className="w-full pl-9 pr-4 py-2 text-sm bg-muted/50 border border-border/50 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange/50 text-foreground placeholder:text-muted-foreground"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="flex gap-1 p-1 bg-zinc-100 rounded-lg">
+        <div className="flex gap-1 p-1 bg-muted rounded-lg border border-border/30">
           {(['all', 'unrated', 'rated', 'issues'] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
               className={cn(
                 "flex-1 px-2 py-1 text-[10px] font-medium uppercase tracking-wider rounded-md transition-all",
-                filter === f ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700"
+                filter === f ? "bg-brand-orange text-brand-bg shadow-sm" : "text-muted-foreground hover:text-foreground"
               )}
             >
               {f}
@@ -54,28 +54,31 @@ export function ConversationList({ selectedId, onSelect }: ConversationListProps
       </div>
       <div className="flex-1 overflow-auto">
         {conversations.length === 0 ? (
-          <div className="p-8 text-center text-zinc-500 text-sm">No conversations found</div>
+          <div className="p-8 text-center text-muted-foreground text-sm">No conversations found</div>
         ) : (
           conversations.map((c) => (
             <button
               key={c.id}
               onClick={() => onSelect(c.id)}
               className={cn(
-                "w-full text-left p-4 border-b border-zinc-100 transition-colors hover:bg-zinc-50",
-                selectedId === c.id && "bg-zinc-50 border-l-4 border-l-zinc-900"
+                "w-full text-left p-4 border-b border-border/30 transition-all hover:bg-muted/30",
+                selectedId === c.id && "bg-muted/50 border-l-4 border-l-brand-orange"
               )}
             >
               <div className="flex justify-between items-start mb-1">
-                <span className="text-[10px] font-mono text-zinc-400 uppercase">{c.source}</span>
+                <span className="text-[10px] font-mono text-muted-foreground uppercase">{c.source}</span>
                 {c.rating && (
                   <div className={cn(
-                    "w-2 h-2 rounded-full",
-                    c.rating.correctness === 'correct' ? "bg-green-500" : "bg-red-500"
+                    "w-2 h-2 rounded-full shadow-[0_0_8px_currentColor]",
+                    c.rating.correctness === 'correct' ? "bg-green-400 text-green-400" : "bg-red-400 text-red-400"
                   )} />
                 )}
               </div>
-              <h4 className="text-sm font-medium text-zinc-900 line-clamp-1">{c.title || 'Untitled Conversation'}</h4>
-              <p className="text-xs text-zinc-500 mt-1 line-clamp-2">
+              <h4 className={cn(
+                "text-sm font-medium line-clamp-1 transition-colors",
+                selectedId === c.id ? "text-brand-orange" : "text-foreground"
+              )}>{c.title || 'Untitled Conversation'}</h4>
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-2 italic">
                 {state.messages[c.messages[0]]?.content.substring(0, 100)}...
               </p>
             </button>

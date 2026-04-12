@@ -1,5 +1,5 @@
 {
   "name": "ConvoWorkbench",
-  "description": "Import, rate, and distill LLM conversation exports into transferable gitagent-compatible SKILL.md artifacts.",
+  "description": "Import, rate, and distill LLM conversation exports into gitagent-compatible SKILL.md artifacts. Features 3D graph exploration and AI-powered knowledge insights.",
   "requestFramePermissions": []
 }

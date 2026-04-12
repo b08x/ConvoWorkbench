@@ -42,31 +42,35 @@ export function SettingsView() {
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-8">
       <div className="space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
-        <p className="text-zinc-500">Configure your model providers and task-specific model selection.</p>
+        <h2 className="text-3xl font-bold tracking-tight text-foreground">Settings</h2>
+        <p className="text-muted-foreground">Configure your model providers and task-specific model selection.</p>
       </div>
 
       <Tabs defaultValue="providers" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="providers" className="gap-2"><Key className="w-4 h-4" /> Providers</TabsTrigger>
-          <TabsTrigger value="tasks" className="gap-2"><Settings2 className="w-4 h-4" /> Task Models</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 bg-muted/50 border border-border/50 p-1">
+          <TabsTrigger value="providers" className="gap-2 data-[state=active]:bg-brand-orange data-[state=active]:text-brand-bg transition-all">
+            <Key className="w-4 h-4" /> Providers
+          </TabsTrigger>
+          <TabsTrigger value="tasks" className="gap-2 data-[state=active]:bg-brand-pink data-[state=active]:text-brand-bg transition-all">
+            <Settings2 className="w-4 h-4" /> Task Models
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="providers" className="space-y-6">
-          <Card>
+          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-green-600" />
+              <CardTitle className="text-lg flex items-center gap-2 text-foreground">
+                <ShieldCheck className="w-5 h-5 text-green-400" />
                 API Key Management
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-muted-foreground">
                 Keys are stored in sessionStorage and cleared on tab close.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="bg-zinc-50 border border-zinc-200 rounded-md p-4 flex gap-3">
-                <AlertCircle className="w-5 h-5 text-zinc-400 shrink-0" />
-                <p className="text-xs text-zinc-600 leading-relaxed">
+              <div className="bg-brand-orange/5 border border-brand-orange/20 rounded-md p-4 flex gap-3">
+                <AlertCircle className="w-5 h-5 text-brand-orange shrink-0" />
+                <p className="text-xs text-muted-foreground leading-relaxed">
                   OpenRouter is recommended for browser-native apps. Other providers may require CORS proxies if not running locally.
                 </p>
               </div>
@@ -75,11 +79,10 @@ export function SettingsView() {
                 {providers.map((p) => (
                   <div key={p.id} className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor={`key-${p.id}`}>{p.name} {p.id === 'ollama' ? 'URL' : 'API Key'}</Label>
+                      <Label htmlFor={`key-${p.id}`} className="text-foreground">{p.name} {p.id === 'ollama' ? 'URL' : 'API Key'}</Label>
                       <Button 
                         variant="ghost" 
-                        size="sm" 
-                        className="h-8 px-2 gap-1 text-xs"
+                        className="h-8 px-2 gap-1 text-xs text-muted-foreground hover:text-brand-orange hover:bg-brand-orange/10"
                         onClick={() => refreshModels(p.id)}
                       >
                         <RefreshCw className="w-3 h-3" /> Refresh Models
@@ -92,8 +95,9 @@ export function SettingsView() {
                         placeholder={p.id === 'ollama' ? 'http://localhost:11434' : 'sk-...'}
                         value={apiKeys[p.id] || ''}
                         onChange={(e) => setApiKey(p.id, e.target.value)}
+                        className="bg-muted/50 border-border/50 focus:ring-brand-orange/50"
                       />
-                      <Button variant="outline" onClick={() => setApiKey(p.id, '')}>Clear</Button>
+                      <Button variant="outline" className="border-border/50 hover:bg-muted" onClick={() => setApiKey(p.id, '')}>Clear</Button>
                     </div>
                   </div>
                 ))}
@@ -103,10 +107,10 @@ export function SettingsView() {
         </TabsContent>
 
         <TabsContent value="tasks" className="space-y-6">
-          <Card>
+          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="text-lg">Task-Specific Configuration</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-lg text-foreground">Task-Specific Configuration</CardTitle>
+              <CardDescription className="text-muted-foreground">
                 Assign specific models and parameters to different application tasks.
               </CardDescription>
             </CardHeader>
@@ -116,22 +120,22 @@ export function SettingsView() {
                 const models = availableModels[config.providerId] || [];
 
                 return (
-                  <div key={task} className="space-y-4 pb-6 border-b border-zinc-100 last:border-0 last:pb-0">
+                  <div key={task} className="space-y-4 pb-6 border-b border-border/30 last:border-0 last:pb-0">
                     <div className="flex items-center justify-between">
-                      <h4 className="font-medium text-sm">{TASK_LABELS[task]}</h4>
+                      <h4 className="font-medium text-sm text-foreground">{TASK_LABELS[task]}</h4>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="text-xs text-zinc-500">Provider</Label>
+                        <Label className="text-xs text-muted-foreground">Provider</Label>
                         <Select 
                           value={config.providerId} 
                           onValueChange={(val) => setTaskConfig(task, { ...config, providerId: val, modelId: '' })}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger className="bg-muted/50 border-border/50">
                             <SelectValue placeholder="Select Provider" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-card border-border">
                             {providers.map(p => (
                               <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                             ))}
@@ -140,15 +144,15 @@ export function SettingsView() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-xs text-zinc-500">Model</Label>
+                        <Label className="text-xs text-muted-foreground">Model</Label>
                         <Select 
                           value={config.modelId} 
                           onValueChange={(val) => setTaskConfig(task, { ...config, modelId: val })}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger className="bg-muted/50 border-border/50">
                             <SelectValue placeholder="Select Model" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-card border-border">
                             {models.length > 0 ? (
                               models.map(m => (
                                 <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
@@ -164,8 +168,8 @@ export function SettingsView() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-2">
                       <div className="space-y-3">
                         <div className="flex justify-between">
-                          <Label className="text-xs text-zinc-500">Temperature</Label>
-                          <span className="text-xs font-mono">{config.parameters.temperature}</span>
+                          <Label className="text-xs text-muted-foreground">Temperature</Label>
+                          <span className="text-xs font-mono text-brand-orange">{config.parameters.temperature}</span>
                         </div>
                         <Slider 
                           value={[config.parameters.temperature]} 
@@ -179,10 +183,11 @@ export function SettingsView() {
                               parameters: { ...config.parameters, temperature: val } 
                             });
                           }}
+                          className="[&_[role=slider]]:bg-brand-orange [&_[role=slider]]:border-brand-orange"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-xs text-zinc-500">Max Tokens</Label>
+                        <Label className="text-xs text-muted-foreground">Max Tokens</Label>
                         <Input 
                           type="number" 
                           value={config.parameters.maxTokens}
@@ -190,7 +195,7 @@ export function SettingsView() {
                             ...config, 
                             parameters: { ...config.parameters, maxTokens: parseInt(e.target.value) } 
                           })}
-                          className="h-8"
+                          className="h-8 bg-muted/50 border-border/50 focus:ring-brand-pink/50"
                         />
                       </div>
                     </div>

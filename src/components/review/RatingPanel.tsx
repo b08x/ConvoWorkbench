@@ -47,25 +47,31 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
   if (!conversation) return null;
 
   return (
-    <div className="w-80 border-l border-zinc-200 bg-white flex flex-col h-full p-6 space-y-8">
+    <div className="w-80 border-l border-border bg-card flex flex-col h-full p-6 space-y-8">
       <div>
-        <h3 className="text-xs font-mono text-zinc-400 uppercase tracking-widest mb-4">Rating Controls</h3>
+        <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-4">Rating Controls</h3>
         
         <div className="space-y-6">
           {/* Correctness */}
           <div className="space-y-2">
-            <label className="text-xs font-medium text-zinc-700">Correctness</label>
+            <label className="text-xs font-medium text-muted-foreground">Correctness</label>
             <div className="flex gap-2">
               <Button
                 variant={rating.correctness === 'correct' ? 'default' : 'outline'}
-                className="flex-1 h-9 gap-2"
+                className={cn(
+                  "flex-1 h-9 gap-2 transition-all",
+                  rating.correctness === 'correct' ? "bg-brand-orange text-brand-bg hover:bg-brand-orange/90" : "border-border/50 hover:bg-brand-orange/10 hover:text-brand-orange hover:border-brand-orange/50"
+                )}
                 onClick={() => updateRating({ correctness: 'correct' })}
               >
                 <Check className="w-3 h-3" /> Correct
               </Button>
               <Button
                 variant={rating.correctness === 'incorrect' ? 'default' : 'outline'}
-                className="flex-1 h-9 gap-2"
+                className={cn(
+                  "flex-1 h-9 gap-2 transition-all",
+                  rating.correctness === 'incorrect' ? "bg-brand-pink text-brand-bg hover:bg-brand-pink/90" : "border-border/50 hover:bg-brand-pink/10 hover:text-brand-pink hover:border-brand-pink/50"
+                )}
                 onClick={() => updateRating({ correctness: 'incorrect' })}
               >
                 <X className="w-3 h-3" /> Incorrect
@@ -75,18 +81,24 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
 
           {/* Tone */}
           <div className="space-y-2">
-            <label className="text-xs font-medium text-zinc-700">Tone of Voice</label>
+            <label className="text-xs font-medium text-muted-foreground">Tone of Voice</label>
             <div className="flex gap-2">
               <Button
                 variant={rating.tone === 'appropriate' ? 'default' : 'outline'}
-                className="flex-1 h-9 gap-2"
+                className={cn(
+                  "flex-1 h-9 gap-2 transition-all",
+                  rating.tone === 'appropriate' ? "bg-brand-orange text-brand-bg hover:bg-brand-orange/90" : "border-border/50 hover:bg-brand-orange/10 hover:text-brand-orange hover:border-brand-orange/50"
+                )}
                 onClick={() => updateRating({ tone: 'appropriate' })}
               >
                 <ThumbsUp className="w-3 h-3" /> Appropriate
               </Button>
               <Button
                 variant={rating.tone === 'inappropriate' ? 'default' : 'outline'}
-                className="flex-1 h-9 gap-2"
+                className={cn(
+                  "flex-1 h-9 gap-2 transition-all",
+                  rating.tone === 'inappropriate' ? "bg-brand-pink text-brand-bg hover:bg-brand-pink/90" : "border-border/50 hover:bg-brand-pink/10 hover:text-brand-pink hover:border-brand-pink/50"
+                )}
                 onClick={() => updateRating({ tone: 'inappropriate' })}
               >
                 <ThumbsDown className="w-3 h-3" /> Issues
@@ -96,18 +108,24 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
 
           {/* Format */}
           <div className="space-y-2">
-            <label className="text-xs font-medium text-zinc-700">Format</label>
+            <label className="text-xs font-medium text-muted-foreground">Format</label>
             <div className="flex gap-2">
               <Button
                 variant={rating.format === 'good' ? 'default' : 'outline'}
-                className="flex-1 h-9 gap-2"
+                className={cn(
+                  "flex-1 h-9 gap-2 transition-all",
+                  rating.format === 'good' ? "bg-brand-orange text-brand-bg hover:bg-brand-orange/90" : "border-border/50 hover:bg-brand-orange/10 hover:text-brand-orange hover:border-brand-orange/50"
+                )}
                 onClick={() => updateRating({ format: 'good' })}
               >
                 <FileText className="w-3 h-3" /> Good
               </Button>
               <Button
                 variant={rating.format === 'bad' ? 'default' : 'outline'}
-                className="flex-1 h-9 gap-2"
+                className={cn(
+                  "flex-1 h-9 gap-2 transition-all",
+                  rating.format === 'bad' ? "bg-brand-pink text-brand-bg hover:bg-brand-pink/90" : "border-border/50 hover:bg-brand-pink/10 hover:text-brand-pink hover:border-brand-pink/50"
+                )}
                 onClick={() => updateRating({ format: 'bad' })}
               >
                 <AlertCircle className="w-3 h-3" /> Bad
@@ -118,19 +136,19 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
       </div>
 
       <div className="flex-1 flex flex-col space-y-2">
-        <label className="text-xs font-medium text-zinc-700">Notes</label>
+        <label className="text-xs font-medium text-muted-foreground">Notes</label>
         <textarea
-          className="flex-1 w-full p-3 text-sm border border-zinc-200 rounded-md focus:outline-none focus:ring-2 focus:ring-zinc-950 resize-none"
+          className="flex-1 w-full p-3 text-sm bg-muted/30 border border-border/50 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange/50 text-foreground placeholder:text-muted-foreground resize-none transition-all"
           placeholder="Add annotations or failure analysis..."
           value={notes}
           onChange={handleNotesChange}
         />
       </div>
 
-      <div className="pt-4 border-t border-zinc-100">
-        <div className="flex justify-between text-[10px] font-mono text-zinc-400 uppercase">
+      <div className="pt-4 border-t border-border/50">
+        <div className="flex justify-between text-[10px] font-mono text-muted-foreground uppercase">
           <span>Shortcuts</span>
-          <span>1-6, ←/→</span>
+          <span className="text-brand-pink">1-6, ←/→</span>
         </div>
       </div>
     </div>

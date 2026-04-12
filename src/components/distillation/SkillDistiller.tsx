@@ -50,25 +50,24 @@ export function SkillDistiller() {
   return (
     <div className="p-8 max-w-5xl mx-auto space-y-8">
       <div className="space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Skill Distiller</h2>
-        <p className="text-zinc-500">Consolidate trajectory lessons into gitagent-compatible SKILL.md files.</p>
+        <h2 className="text-3xl font-bold tracking-tight text-foreground">Skill Distiller</h2>
+        <p className="text-muted-foreground">Consolidate trajectory lessons into gitagent-compatible SKILL.md files.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="space-y-4">
-          <h3 className="text-sm font-mono uppercase tracking-wider text-zinc-500">Topic Clusters</h3>
+          <h3 className="text-sm font-mono uppercase tracking-wider text-muted-foreground">Topic Clusters</h3>
           {topics.length === 0 ? (
-            <p className="text-sm text-zinc-500 italic">No trajectories available for distillation. Compile trajectories first.</p>
+            <p className="text-sm text-muted-foreground italic">No trajectories available for distillation. Compile trajectories first.</p>
           ) : (
             topics.map((topicId) => (
-              <Card key={topicId}>
+              <Card key={topicId} className="border-border/50 bg-card/50 backdrop-blur-sm hover:border-brand-orange/30 transition-all">
                 <CardHeader className="flex flex-row items-center justify-between py-4">
-                  <CardTitle className="text-sm font-medium">{state.topics[topicId]?.label || 'General Skills'}</CardTitle>
+                  <CardTitle className="text-sm font-medium text-foreground">{state.topics[topicId]?.label || 'General Skills'}</CardTitle>
                   <Button 
-                    size="sm" 
                     onClick={() => handleDistill(topicId)}
                     disabled={loading !== null}
-                    className="h-8 gap-2"
+                    className="h-8 gap-2 bg-brand-orange text-brand-bg hover:bg-brand-orange/90 shadow-[0_0_10px_rgba(230,126,95,0.3)]"
                   >
                     {loading === topicId ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
                     Distill
@@ -80,21 +79,21 @@ export function SkillDistiller() {
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-sm font-mono uppercase tracking-wider text-zinc-500">Distilled Skills</h3>
+          <h3 className="text-sm font-mono uppercase tracking-wider text-muted-foreground">Distilled Skills</h3>
           {Object.values(state.skills).length === 0 ? (
-            <p className="text-sm text-zinc-500 italic">No skills distilled yet.</p>
+            <p className="text-sm text-muted-foreground italic">No skills distilled yet.</p>
           ) : (
             (Object.values(state.skills) as any[]).map((skill) => (
-              <Card key={skill.id}>
+              <Card key={skill.id} className="border-border/50 bg-card/50 backdrop-blur-sm hover:border-brand-pink/30 transition-all">
                 <CardHeader className="flex flex-row items-center justify-between py-4">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-zinc-400" />
+                  <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
+                    <FileText className="w-4 h-4 text-brand-pink" />
                     {skill.title}
                   </CardTitle>
-                  <span className="text-[10px] font-mono text-zinc-400">v{skill.version}</span>
+                  <span className="text-[10px] font-mono text-muted-foreground">v{skill.version}</span>
                 </CardHeader>
                 <CardContent>
-                  <pre className="text-[10px] bg-zinc-50 p-3 rounded border border-zinc-100 overflow-auto max-h-40 font-mono">
+                  <pre className="text-[10px] bg-muted/30 p-3 rounded border border-border/50 overflow-auto max-h-40 font-mono text-muted-foreground scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
                     {skill.content.substring(0, 300)}...
                   </pre>
                 </CardContent>
