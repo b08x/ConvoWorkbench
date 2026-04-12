@@ -3,28 +3,48 @@ import { useGraph } from '@/src/contexts/GraphContext';
 import { ConversationRating } from '@/src/types/graph';
 import { Button } from '@/src/components/ui/button';
 import { cn } from '@/src/lib/utils';
-import { Check, X, ThumbsUp, ThumbsDown, FileText, AlertCircle } from 'lucide-react';
+import { 
+  Check, X, ThumbsUp, ThumbsDown, FileText, AlertCircle, 
+  Minus, Hash, MessageSquare, Zap, Ghost, Smile, RefreshCw
+} from 'lucide-react';
 
 interface RatingPanelProps {
   conversationId: string | null;
 }
 
+const STYLE_OPTIONS = [
+  { id: 'too_long', label: 'Too Long', icon: Hash },
+  { id: 'too_concise', label: 'Too Concise', icon: MessageSquare },
+  { id: 'sycophantic', label: 'Sycophantic', icon: Smile },
+  { id: 'caustic', label: 'Caustic', icon: Zap },
+  { id: 'repetitive', label: 'Repetitive', icon: RefreshCw },
+  { id: 'hallucination', label: 'Hallucination', icon: Ghost },
+];
+
 export function RatingPanel({ conversationId }: RatingPanelProps) {
   const { state, dispatch } = useGraph();
   const conversation = conversationId ? state.conversations[conversationId] : null;
 
-  const [rating, setRating] = useState<Partial<ConversationRating>>({});
+  const [rating, setRating] = useState<Partial<ConversationRating>>({
+    style_tags: []
+  });
   const [notes, setNotes] = useState('');
 
   useEffect(() => {
     if (conversation) {
-      setRating(conversation.rating || {});
+      setRating(conversation.rating || { style_tags: [] });
       setNotes(conversation.notes || '');
     }
   }, [conversationId, conversation]);
 
   const updateRating = (updates: Partial<ConversationRating>) => {
-    const newRating = { ...rating, ...updates } as ConversationRating;
+    const newRating = { 
+      ...rating, 
+      ...updates,
+      style_tags: updates.style_tags || rating.style_tags || [],
+      rated_at: Date.now()
+    } as ConversationRating;
+    
     setRating(newRating);
     if (conversationId) {
       dispatch({
@@ -32,6 +52,14 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
         payload: { id: conversationId, rating: newRating, notes }
       });
     }
+  };
+
+  const toggleStyleTag = (tag: string) => {
+    const currentTags = rating.style_tags || [];
+    const newTags = currentTags.includes(tag)
+      ? currentTags.filter(t => t !== tag)
+      : [...currentTags, tag];
+    updateRating({ style_tags: newTags });
   };
 
   const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -47,57 +75,89 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
   if (!conversation) return null;
 
   return (
-    <div className="w-80 border-l border-border bg-card flex flex-col h-full p-6 space-y-8">
+    <div className="w-80 border-l border-border bg-card flex flex-col h-full p-6 space-y-8 overflow-y-auto scrollbar-none">
       <div>
-        <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-4">Rating Controls</h3>
+        <h3 className="text-[10px] font-mono text-muted-foreground uppercase tracking-[0.2em] mb-6">Rating Controls</h3>
         
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Correctness */}
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground">Correctness</label>
-            <div className="flex gap-2">
+          <div className="space-y-3">
+            <label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70">Correctness</label>
+            <div className="flex gap-1.5">
               <Button
-                variant={rating.correctness === 'correct' ? 'default' : 'outline'}
+                variant="outline"
                 className={cn(
-                  "flex-1 h-9 gap-2 transition-all",
-                  rating.correctness === 'correct' ? "bg-brand-orange text-brand-bg hover:bg-brand-orange/90" : "border-border/50 hover:bg-brand-orange/10 hover:text-brand-orange hover:border-brand-orange/50"
+                  "flex-1 h-8 text-[10px] gap-1.5 transition-all border-border/30",
+                  rating.correctness === 'correct' 
+                    ? "bg-brand-orange/20 text-brand-orange border-brand-orange/40" 
+                    : "hover:bg-muted/50 text-muted-foreground"
                 )}
                 onClick={() => updateRating({ correctness: 'correct' })}
               >
                 <Check className="w-3 h-3" /> Correct
               </Button>
               <Button
-                variant={rating.correctness === 'incorrect' ? 'default' : 'outline'}
+                variant="outline"
                 className={cn(
-                  "flex-1 h-9 gap-2 transition-all",
-                  rating.correctness === 'incorrect' ? "bg-brand-pink text-brand-bg hover:bg-brand-pink/90" : "border-border/50 hover:bg-brand-pink/10 hover:text-brand-pink hover:border-brand-pink/50"
+                  "flex-1 h-8 text-[10px] gap-1.5 transition-all border-border/30",
+                  rating.correctness === 'neutral' 
+                    ? "bg-muted text-foreground border-muted-foreground/30" 
+                    : "hover:bg-muted/50 text-muted-foreground"
+                )}
+                onClick={() => updateRating({ correctness: 'neutral' })}
+              >
+                <Minus className="w-3 h-3" /> N/A
+              </Button>
+              <Button
+                variant="outline"
+                className={cn(
+                  "flex-1 h-8 text-[10px] gap-1.5 transition-all border-border/30",
+                  rating.correctness === 'incorrect' 
+                    ? "bg-brand-pink/20 text-brand-pink border-brand-pink/40" 
+                    : "hover:bg-muted/50 text-muted-foreground"
                 )}
                 onClick={() => updateRating({ correctness: 'incorrect' })}
               >
-                <X className="w-3 h-3" /> Incorrect
+                <X className="w-3 h-3" /> Fail
               </Button>
             </div>
           </div>
 
           {/* Tone */}
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground">Tone of Voice</label>
-            <div className="flex gap-2">
+          <div className="space-y-3">
+            <label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70">Tone of Voice</label>
+            <div className="flex gap-1.5">
               <Button
-                variant={rating.tone === 'appropriate' ? 'default' : 'outline'}
+                variant="outline"
                 className={cn(
-                  "flex-1 h-9 gap-2 transition-all",
-                  rating.tone === 'appropriate' ? "bg-brand-orange text-brand-bg hover:bg-brand-orange/90" : "border-border/50 hover:bg-brand-orange/10 hover:text-brand-orange hover:border-brand-orange/50"
+                  "flex-1 h-8 text-[10px] gap-1.5 transition-all border-border/30",
+                  rating.tone === 'appropriate' 
+                    ? "bg-brand-orange/20 text-brand-orange border-brand-orange/40" 
+                    : "hover:bg-muted/50 text-muted-foreground"
                 )}
                 onClick={() => updateRating({ tone: 'appropriate' })}
               >
-                <ThumbsUp className="w-3 h-3" /> Appropriate
+                <ThumbsUp className="w-3 h-3" /> Good
               </Button>
               <Button
-                variant={rating.tone === 'inappropriate' ? 'default' : 'outline'}
+                variant="outline"
                 className={cn(
-                  "flex-1 h-9 gap-2 transition-all",
-                  rating.tone === 'inappropriate' ? "bg-brand-pink text-brand-bg hover:bg-brand-pink/90" : "border-border/50 hover:bg-brand-pink/10 hover:text-brand-pink hover:border-brand-pink/50"
+                  "flex-1 h-8 text-[10px] gap-1.5 transition-all border-border/30",
+                  rating.tone === 'neutral' 
+                    ? "bg-muted text-foreground border-muted-foreground/30" 
+                    : "hover:bg-muted/50 text-muted-foreground"
+                )}
+                onClick={() => updateRating({ tone: 'neutral' })}
+              >
+                <Minus className="w-3 h-3" /> N/A
+              </Button>
+              <Button
+                variant="outline"
+                className={cn(
+                  "flex-1 h-8 text-[10px] gap-1.5 transition-all border-border/30",
+                  rating.tone === 'inappropriate' 
+                    ? "bg-brand-pink/20 text-brand-pink border-brand-pink/40" 
+                    : "hover:bg-muted/50 text-muted-foreground"
                 )}
                 onClick={() => updateRating({ tone: 'inappropriate' })}
               >
@@ -107,29 +167,72 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
           </div>
 
           {/* Format */}
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground">Format</label>
-            <div className="flex gap-2">
+          <div className="space-y-3">
+            <label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70">Format</label>
+            <div className="flex gap-1.5">
               <Button
-                variant={rating.format === 'good' ? 'default' : 'outline'}
+                variant="outline"
                 className={cn(
-                  "flex-1 h-9 gap-2 transition-all",
-                  rating.format === 'good' ? "bg-brand-orange text-brand-bg hover:bg-brand-orange/90" : "border-border/50 hover:bg-brand-orange/10 hover:text-brand-orange hover:border-brand-orange/50"
+                  "flex-1 h-8 text-[10px] gap-1.5 transition-all border-border/30",
+                  rating.format === 'good' 
+                    ? "bg-brand-orange/20 text-brand-orange border-brand-orange/40" 
+                    : "hover:bg-muted/50 text-muted-foreground"
                 )}
                 onClick={() => updateRating({ format: 'good' })}
               >
                 <FileText className="w-3 h-3" /> Good
               </Button>
               <Button
-                variant={rating.format === 'bad' ? 'default' : 'outline'}
+                variant="outline"
                 className={cn(
-                  "flex-1 h-9 gap-2 transition-all",
-                  rating.format === 'bad' ? "bg-brand-pink text-brand-bg hover:bg-brand-pink/90" : "border-border/50 hover:bg-brand-pink/10 hover:text-brand-pink hover:border-brand-pink/50"
+                  "flex-1 h-8 text-[10px] gap-1.5 transition-all border-border/30",
+                  rating.format === 'neutral' 
+                    ? "bg-muted text-foreground border-muted-foreground/30" 
+                    : "hover:bg-muted/50 text-muted-foreground"
+                )}
+                onClick={() => updateRating({ format: 'neutral' })}
+              >
+                <Minus className="w-3 h-3" /> N/A
+              </Button>
+              <Button
+                variant="outline"
+                className={cn(
+                  "flex-1 h-8 text-[10px] gap-1.5 transition-all border-border/30",
+                  rating.format === 'bad' 
+                    ? "bg-brand-pink/20 text-brand-pink border-brand-pink/40" 
+                    : "hover:bg-muted/50 text-muted-foreground"
                 )}
                 onClick={() => updateRating({ format: 'bad' })}
               >
                 <AlertCircle className="w-3 h-3" /> Bad
               </Button>
+            </div>
+          </div>
+
+          {/* Style Tags */}
+          <div className="space-y-3">
+            <label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70">Style Judgement</label>
+            <div className="grid grid-cols-2 gap-1.5">
+              {STYLE_OPTIONS.map((opt) => {
+                const Icon = opt.icon;
+                const isActive = rating.style_tags?.includes(opt.id);
+                return (
+                  <Button
+                    key={opt.id}
+                    variant="outline"
+                    className={cn(
+                      "h-8 text-[10px] justify-start gap-2 transition-all border-border/30",
+                      isActive 
+                        ? "bg-brand-pink/10 text-brand-pink border-brand-pink/30" 
+                        : "hover:bg-muted/50 text-muted-foreground"
+                    )}
+                    onClick={() => toggleStyleTag(opt.id)}
+                  >
+                    <Icon className="w-3 h-3" />
+                    {opt.label}
+                  </Button>
+                );
+              })}
             </div>
           </div>
         </div>

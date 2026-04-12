@@ -105,7 +105,7 @@ export class OllamaAdapter implements ModelProvider {
         id: m.name,
         name: m.name,
         capabilities: {
-          tools: false, // Ollama tool support varies
+          tools: false,
           reasoning: m.name.includes('llama3') || m.name.includes('mistral'),
           structured: true,
         }
@@ -113,7 +113,12 @@ export class OllamaAdapter implements ModelProvider {
     } catch (e) {
       const isNetworkError = e instanceof TypeError && e.message === 'Failed to fetch';
       if (isNetworkError) {
-        console.error('Ollama connection failed (Network Error). This usually means Ollama is not running or OLLAMA_ORIGINS="*" is not set for CORS support.');
+        console.warn('Ollama connection failed (Network Error). This usually means Ollama is not running or OLLAMA_ORIGINS="*" is not set for CORS support.');
+        // Return a few common fallbacks so the user can at least see the option
+        return [
+          { id: 'llama3', name: 'Llama 3 (Fallback)', capabilities: { tools: false, reasoning: true, structured: true } },
+          { id: 'mistral', name: 'Mistral (Fallback)', capabilities: { tools: false, reasoning: true, structured: true } },
+        ];
       } else {
         console.error('Ollama connection failed:', e);
       }

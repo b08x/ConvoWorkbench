@@ -11,9 +11,10 @@ export interface MessageNode {
 }
 
 export interface ConversationRating {
-  correctness: 'correct' | 'incorrect' | null;
-  tone: 'appropriate' | 'inappropriate' | null;
-  format: 'good' | 'bad' | null;
+  correctness: 'correct' | 'incorrect' | 'neutral' | null;
+  tone: 'appropriate' | 'inappropriate' | 'neutral' | null;
+  format: 'good' | 'bad' | 'neutral' | null;
+  style_tags: string[];
   rated_at: number;
 }
 

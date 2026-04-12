@@ -25,6 +25,7 @@ export function createInitialRating(existing?: Partial<ConversationRating>): Con
     correctness: existing?.correctness ?? null,
     tone: existing?.tone ?? null,
     format: existing?.format ?? null,
+    style_tags: existing?.style_tags ?? [],
     rated_at: Date.now(),
   };
 }
