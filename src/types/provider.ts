@@ -27,6 +27,7 @@ export interface ModelProvider {
   generate(prompt: GenerationPrompt, apiKey: string, modelId: string): Promise<GenerationResult>;
   stream(prompt: GenerationPrompt, apiKey: string, modelId: string): AsyncGenerator<string>;
   fetchModels(apiKey: string): Promise<ModelInfo[]>;
+  speak?(text: string, apiKey: string): Promise<string>;
 }
 
 export type TaskType = 

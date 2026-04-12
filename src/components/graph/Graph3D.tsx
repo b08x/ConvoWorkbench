@@ -2,6 +2,11 @@ import * as React from 'react';
 import ForceGraph3D, { ForceGraphMethods } from 'react-force-graph-3d';
 import { ConvoGraph } from '@/src/types/graph';
 import * as THREE from 'three';
+import { motion, AnimatePresence } from 'motion/react';
+import { X, Volume2, BrainCircuit, MessageSquare, Target, Zap } from 'lucide-react';
+import { Button } from '@/src/components/ui/button';
+import { useProvider } from '@/src/contexts/ProviderContext';
+import { cn } from '@/src/lib/utils';
 
 interface Graph3DProps {
   graph: ConvoGraph;
@@ -9,6 +14,91 @@ interface Graph3DProps {
 
 export function Graph3D({ graph }: Graph3DProps) {
   const fgRef = React.useRef<ForceGraphMethods>(null);
+  const [selectedNode, setSelectedNode] = React.useState<any>(null);
+  const [summary, setSummary] = React.useState<string | null>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [speaking, setSpeaking] = React.useState(false);
+  const { getProvider, apiKeys } = useProvider();
+
+  const playAudio = async (base64: string) => {
+    try {
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+      const int16Data = new Int16Array(bytes.buffer);
+      const float32Data = new Float32Array(int16Data.length);
+      for (let i = 0; i < int16Data.length; i++) {
+        float32Data[i] = int16Data[i] / 32768;
+      }
+      
+      const buffer = audioContext.createBuffer(1, float32Data.length, 24000);
+      buffer.getChannelData(0).set(float32Data);
+      
+      const source = audioContext.createBufferSource();
+      source.buffer = buffer;
+      source.connect(audioContext.destination);
+      source.onended = () => setSpeaking(false);
+      source.start();
+    } catch (err) {
+      console.error('Audio playback failed:', err);
+      setSpeaking(false);
+    }
+  };
+
+  const generateNodeSummary = async (node: any) => {
+    setLoading(true);
+    setSummary(null);
+    try {
+      const provider = getProvider('gemini');
+      const apiKey = apiKeys['gemini'];
+      if (!apiKey) throw new Error('API Key missing');
+
+      let context = '';
+      if (node.type === 'conversation') {
+        const convo = graph.conversations[node.id];
+        context = `Conversation Title: ${convo.title}\nMessages: ${JSON.stringify(convo.messages.slice(0, 5))}`;
+      } else if (node.type === 'topic') {
+        const topic = graph.topics[node.id];
+        context = `Topic: ${topic.label}\nConversations: ${topic.conversation_ids.length}`;
+      } else if (node.type === 'skill') {
+        const skill = graph.skills[node.id];
+        context = `Skill: ${skill.title}\nDescription: ${skill.content}`;
+      }
+
+      const prompt = {
+        system: "You are a Graph Intelligence Assistant. Provide a creative, one-sentence summary of the selected node. Be concise and insightful.",
+        user: `Node Data: ${context}`
+      };
+
+      const result = await provider.generate(prompt, apiKey, 'gemini-3-flash-preview');
+      setSummary(result.text);
+    } catch (err) {
+      console.error(err);
+      setSummary('Failed to generate summary.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSpeak = async () => {
+    if (!summary || speaking) return;
+    setSpeaking(true);
+    try {
+      const provider = getProvider('gemini');
+      const apiKey = apiKeys['gemini'];
+      if (!apiKey || !provider.speak) throw new Error('TTS not available');
+
+      const base64 = await provider.speak(summary, apiKey);
+      await playAudio(base64);
+    } catch (err) {
+      console.error(err);
+      setSpeaking(false);
+    }
+  };
 
   const data = React.useMemo(() => {
     const nodes: any[] = [];
@@ -126,6 +216,8 @@ export function Graph3D({ graph }: Graph3DProps) {
         backgroundColor="rgba(0,0,0,0)"
         showNavInfo={false}
         onNodeClick={(node: any) => {
+          setSelectedNode(node);
+          generateNodeSummary(node);
           // Aim at node from outside it
           const distance = 40;
           const distRatio = 1 + distance/Math.hypot(node.x, node.y, node.z);
@@ -137,6 +229,74 @@ export function Graph3D({ graph }: Graph3DProps) {
           );
         }}
       />
+
+      <AnimatePresence>
+        {selectedNode && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className="absolute top-4 right-4 w-80 bg-card/80 backdrop-blur-md border border-border/50 rounded-xl shadow-2xl overflow-hidden z-50"
+          >
+            <div className="p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {selectedNode.type === 'topic' && <BrainCircuit className="w-4 h-4 text-brand-orange" />}
+                  {selectedNode.type === 'conversation' && <MessageSquare className="w-4 h-4 text-slate-400" />}
+                  {selectedNode.type === 'trajectory' && <Target className="w-4 h-4 text-brand-pink" />}
+                  {selectedNode.type === 'skill' && <Zap className="w-4 h-4 text-white" />}
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+                    {selectedNode.type}
+                  </span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-6 w-6 rounded-full hover:bg-white/10" 
+                  onClick={() => setSelectedNode(null)}
+                >
+                  <X className="w-3 h-3" />
+                </Button>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium leading-tight">{selectedNode.name}</h3>
+                <div className="mt-2 min-h-[3rem]">
+                  {loading ? (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground animate-pulse">
+                      <BrainCircuit className="w-3 h-3 animate-spin" />
+                      Distilling insights...
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic leading-relaxed">
+                      {summary}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {summary && !loading && (
+                <div className="flex justify-end">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className={cn(
+                      "h-8 gap-2 text-[10px] uppercase tracking-wider hover:bg-brand-orange/10 hover:text-brand-orange",
+                      speaking && "text-brand-orange bg-brand-orange/10"
+                    )}
+                    onClick={handleSpeak}
+                    disabled={speaking}
+                  >
+                    <Volume2 className={cn("w-3 h-3", speaking && "animate-pulse")} />
+                    {speaking ? "Speaking..." : "Listen"}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="absolute bottom-4 left-4 flex gap-4 pointer-events-none">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-brand-orange" />

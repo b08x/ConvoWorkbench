@@ -3,15 +3,64 @@ import { useGraph } from '@/src/contexts/GraphContext';
 import { useProvider } from '@/src/contexts/ProviderContext';
 import { Button } from '@/src/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
-import { Sparkles, Loader2, BrainCircuit } from 'lucide-react';
+import { Sparkles, Loader2, BrainCircuit, Volume2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { TopicNode, SkillNode } from '@/src/types/graph';
+import { cn } from '@/src/lib/utils';
 
 export function GraphInsights() {
   const { state } = useGraph();
   const { getProvider, apiKeys } = useProvider();
   const [insight, setInsight] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
+  const [speaking, setSpeaking] = React.useState(false);
+
+  const playAudio = async (base64: string) => {
+    try {
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+      const int16Data = new Int16Array(bytes.buffer);
+      const float32Data = new Float32Array(int16Data.length);
+      for (let i = 0; i < int16Data.length; i++) {
+        float32Data[i] = int16Data[i] / 32768;
+      }
+      
+      const buffer = audioContext.createBuffer(1, float32Data.length, 24000);
+      buffer.getChannelData(0).set(float32Data);
+      
+      const source = audioContext.createBufferSource();
+      source.buffer = buffer;
+      source.connect(audioContext.destination);
+      source.onended = () => setSpeaking(false);
+      source.start();
+    } catch (err) {
+      console.error('Audio playback failed:', err);
+      setSpeaking(false);
+    }
+  };
+
+  const handleSpeak = async () => {
+    if (!insight || speaking) return;
+    setSpeaking(true);
+    try {
+      const provider = getProvider('gemini');
+      const apiKey = apiKeys['gemini'];
+      if (!apiKey || !provider.speak) throw new Error('TTS not available');
+
+      // Strip markdown for better TTS
+      const cleanText = insight.replace(/[#*`]/g, '').slice(0, 2000); // Limit length for TTS
+      const base64 = await provider.speak(cleanText, apiKey);
+      await playAudio(base64);
+    } catch (err) {
+      console.error(err);
+      setSpeaking(false);
+    }
+  };
 
   const generateInsights = async () => {
     setLoading(true);
@@ -58,14 +107,27 @@ export function GraphInsights() {
         <CardTitle className="text-sm font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-2">
           <BrainCircuit className="w-4 h-4 text-brand-orange" /> Gemini Graph Insights
         </CardTitle>
-        <Button 
-          onClick={generateInsights} 
-          disabled={loading} 
-          className="h-8 gap-2 bg-brand-orange text-brand-bg hover:bg-brand-orange/90"
-        >
-          {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-          Generate
-        </Button>
+        <div className="flex gap-2">
+          {insight && (
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 border-border/50 hover:bg-brand-orange/10 hover:text-brand-orange"
+              onClick={handleSpeak}
+              disabled={speaking}
+            >
+              <Volume2 className={cn("w-4 h-4", speaking && "animate-pulse text-brand-orange")} />
+            </Button>
+          )}
+          <Button 
+            onClick={generateInsights} 
+            disabled={loading} 
+            className="h-8 gap-2 bg-brand-orange text-brand-bg hover:bg-brand-orange/90"
+          >
+            {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+            Generate
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-auto p-6">
         {insight ? (

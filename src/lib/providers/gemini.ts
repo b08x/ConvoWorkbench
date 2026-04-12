@@ -1,5 +1,5 @@
 import { GenerationPrompt, GenerationResult, ModelProvider, ModelInfo } from '../../types/provider';
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Modality } from "@google/genai";
 
 export class GeminiAdapter implements ModelProvider {
   id = 'gemini';
@@ -37,6 +37,26 @@ export class GeminiAdapter implements ModelProvider {
     for await (const chunk of response) {
       yield chunk.text || '';
     }
+  }
+
+  async speak(text: string, apiKey: string): Promise<string> {
+    const ai = new GoogleGenAI({ apiKey });
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash-preview-tts",
+      contents: [{ parts: [{ text }] }],
+      config: {
+        responseModalities: [Modality.AUDIO],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName: 'Kore' },
+          },
+        },
+      },
+    });
+
+    const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (!base64Audio) throw new Error('Failed to generate audio');
+    return base64Audio;
   }
 
   async fetchModels(apiKey: string): Promise<ModelInfo[]> {
