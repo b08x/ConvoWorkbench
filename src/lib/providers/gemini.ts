@@ -40,23 +40,21 @@ export class GeminiAdapter implements ModelProvider {
   }
 
   async fetchModels(apiKey: string): Promise<ModelInfo[]> {
-    // Gemini API doesn't have a simple public "list models" endpoint that works with just an API key in the same way
-    // But we can return a list of known good models
     return [
       {
-        id: 'gemini-2.0-flash-exp',
-        name: 'Gemini 2.0 Flash (Experimental)',
+        id: 'gemini-3-flash-preview',
+        name: 'Gemini 3 Flash (Preview)',
         capabilities: { tools: true, reasoning: true, structured: true }
       },
       {
-        id: 'gemini-1.5-flash',
-        name: 'Gemini 1.5 Flash',
+        id: 'gemini-3.1-pro-preview',
+        name: 'Gemini 3.1 Pro (Preview)',
+        capabilities: { tools: true, reasoning: true, structured: true }
+      },
+      {
+        id: 'gemini-flash-latest',
+        name: 'Gemini Flash Latest',
         capabilities: { tools: true, reasoning: false, structured: true }
-      },
-      {
-        id: 'gemini-1.5-pro',
-        name: 'Gemini 1.5 Pro',
-        capabilities: { tools: true, reasoning: true, structured: true }
       }
     ];
   }

@@ -37,8 +37,13 @@ export class OllamaAdapter implements ModelProvider {
         object: prompt.schema ? JSON.parse(data.response) : undefined
       };
     } catch (e) {
-      console.error('Ollama generation failed:', e);
-      throw new Error(`Ollama connection failed. Ensure Ollama is running and OLLAMA_ORIGINS="*" is set. Error: ${e instanceof Error ? e.message : String(e)}`);
+      console.error('Ollama connection failed:', e);
+      const isNetworkError = e instanceof TypeError && e.message === 'Failed to fetch';
+      const errorMessage = isNetworkError 
+        ? 'Ollama connection failed (Network Error). This usually means Ollama is not running or OLLAMA_ORIGINS="*" is not set for CORS support. Check your terminal and environment variables.'
+        : `Ollama connection failed: ${e instanceof Error ? e.message : String(e)}`;
+      
+      throw new Error(errorMessage);
     }
   }
 
@@ -78,7 +83,12 @@ export class OllamaAdapter implements ModelProvider {
       }
     } catch (e) {
       console.error('Ollama streaming failed:', e);
-      throw new Error(`Ollama connection failed. Ensure Ollama is running and OLLAMA_ORIGINS="*" is set. Error: ${e instanceof Error ? e.message : String(e)}`);
+      const isNetworkError = e instanceof TypeError && e.message === 'Failed to fetch';
+      const errorMessage = isNetworkError 
+        ? 'Ollama connection failed (Network Error). This usually means Ollama is not running or OLLAMA_ORIGINS="*" is not set for CORS support. Check your terminal and environment variables.'
+        : `Ollama connection failed: ${e instanceof Error ? e.message : String(e)}`;
+      
+      throw new Error(errorMessage);
     }
   }
 
@@ -101,7 +111,12 @@ export class OllamaAdapter implements ModelProvider {
         }
       }));
     } catch (e) {
-      console.error('Ollama connection failed. Ensure Ollama is running and OLLAMA_ORIGINS="*" is set for CORS support.', e);
+      const isNetworkError = e instanceof TypeError && e.message === 'Failed to fetch';
+      if (isNetworkError) {
+        console.error('Ollama connection failed (Network Error). This usually means Ollama is not running or OLLAMA_ORIGINS="*" is not set for CORS support.');
+      } else {
+        console.error('Ollama connection failed:', e);
+      }
       return [];
     }
   }
