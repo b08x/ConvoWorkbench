@@ -2,9 +2,12 @@ import { ConversationNode, TopicNode } from '../../types/graph';
 import { ModelProvider, TaskModelConfig } from '../../types/provider';
 
 export interface TopicExtractionProgress {
-  topic: TopicNode;
+  topic?: TopicNode;
   timestamp: number;
-  convoTitles: string[];
+  convoTitles?: string[];
+  currentBatch: number;
+  totalBatches: number;
+  estimatedTimeRemaining?: number; // in ms
 }
 
 export async function extractTopics(
@@ -17,10 +20,27 @@ export async function extractTopics(
   const BATCH_SIZE = 10;
   const allTopics: Record<string, TopicNode> = {};
   const convoMap = new Map(conversations.map(c => [c.id, c]));
+  const totalBatches = Math.ceil(conversations.length / BATCH_SIZE);
+  const startTime = Date.now();
 
   for (let i = 0; i < conversations.length; i += BATCH_SIZE) {
+    const currentBatch = Math.floor(i / BATCH_SIZE) + 1;
     const batch = conversations.slice(i, i + BATCH_SIZE);
     
+    // Initial batch progress
+    if (onProgress) {
+      const elapsed = Date.now() - startTime;
+      const avgTimePerBatch = currentBatch > 1 ? elapsed / (currentBatch - 1) : 0;
+      const etr = avgTimePerBatch ? avgTimePerBatch * (totalBatches - currentBatch + 1) : undefined;
+
+      onProgress({
+        currentBatch,
+        totalBatches,
+        timestamp: Date.now(),
+        estimatedTimeRemaining: etr
+      });
+    }
+
     const system = `You are a Topic Modeler. Given a list of conversation titles and snippets, group them into meaningful topic clusters.
 Output a JSON array of objects:
 {
@@ -69,10 +89,17 @@ ${batch.map(c => `ID: ${c.id}, Title: ${c.title}`).join('\n')}`;
           }
 
           if (onProgress) {
+            const elapsed = Date.now() - startTime;
+            const avgTimePerBatch = elapsed / currentBatch;
+            const etr = avgTimePerBatch * (totalBatches - currentBatch);
+
             onProgress({
               topic: allTopics[topicId],
               timestamp: Date.now(),
-              convoTitles: t.conversation_ids.map((id: string) => convoMap.get(id)?.title || id)
+              convoTitles: t.conversation_ids.map((id: string) => convoMap.get(id)?.title || id),
+              currentBatch,
+              totalBatches,
+              estimatedTimeRemaining: etr
             });
           }
         });

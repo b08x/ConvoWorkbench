@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useGraph } from '@/src/contexts/GraphContext';
 import { useProvider } from '@/src/contexts/ProviderContext';
-import { compileTrajectories } from '@/src/lib/trajectory/compiler';
+import { compileTrajectories, CompilationProgress } from '@/src/lib/trajectory/compiler';
 import { Button } from '@/src/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
-import { Zap, Loader2, CheckCircle2 } from 'lucide-react';
+import { Zap, Loader2, CheckCircle2, Clock, Network, Tag } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 
 export function TrajectoryCompiler() {
@@ -12,19 +12,25 @@ export function TrajectoryCompiler() {
   const { getProvider, apiKeys, taskConfigs } = useProvider();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [compilationLogs, setCompilationLogs] = useState<CompilationProgress[]>([]);
 
   const handleCompile = async () => {
     const config = taskConfigs.trajectory;
     const provider = getProvider(config.providerId);
     const apiKey = apiKeys[config.providerId];
 
-    if (!provider || (!apiKey && config.providerId !== 'ollama')) {
-      alert(`Please set API key for ${config.providerId} in Settings first.`);
-      return;
+    if (!provider || (!apiKey && config.providerId === 'ollama')) {
+      // alert handled by provider logic usually, but let's be safe
     }
+    
     setLoading(true);
+    setCompilationLogs([]);
+    setSuccess(false);
+    
     try {
-      const trajectories = await compileTrajectories(state, provider, apiKey, config);
+      const trajectories = await compileTrajectories(state, provider, apiKey, config, {}, (progress) => {
+        setCompilationLogs(prev => [progress, ...prev]);
+      });
       dispatch({ type: 'ADD_TRAJECTORIES', payload: trajectories });
       setSuccess(true);
     } catch (err) {
@@ -34,6 +40,8 @@ export function TrajectoryCompiler() {
       setLoading(false);
     }
   };
+
+  const currentProgress = compilationLogs[0];
 
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-8">
@@ -52,6 +60,44 @@ export function TrajectoryCompiler() {
             and use the LLM to extract generalizable lessons.
           </p>
           
+          {loading && currentProgress && (
+            <div className="space-y-3 bg-zinc-50 p-4 rounded-lg border border-zinc-200">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-mono uppercase tracking-wider text-zinc-500 flex items-center gap-2">
+                  <Network className="w-3 h-3" /> Compilation Progress
+                </h4>
+                {currentProgress.estimatedTimeRemaining !== undefined && (
+                  <span className="text-[10px] font-mono text-zinc-400 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    ETR: {Math.ceil(currentProgress.estimatedTimeRemaining / 1000)}s
+                  </span>
+                )}
+                {currentProgress.estimatedTimeRemaining === undefined && (
+                  <span className="text-[10px] font-mono text-zinc-400 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    Processing...
+                  </span>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-1 bg-zinc-200 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-zinc-900 transition-all duration-500" 
+                    style={{ width: `${(currentProgress.currentGroup / currentProgress.totalGroups) * 100}%` }}
+                  />
+                </div>
+                <span className="text-[10px] font-mono text-zinc-500 whitespace-nowrap">
+                  Group {currentProgress.currentGroup} / {currentProgress.totalGroups}
+                </span>
+              </div>
+
+              <div className="text-xs text-zinc-500 italic">
+                Currently analyzing: <span className="font-semibold text-zinc-900">{currentProgress.groupLabel}</span>
+              </div>
+            </div>
+          )}
+
           <Button 
             className="w-full h-12 gap-2" 
             onClick={handleCompile} 

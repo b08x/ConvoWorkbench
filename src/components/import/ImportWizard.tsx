@@ -174,12 +174,33 @@ export function ImportWizard() {
             </div>
 
             {topicLogs.length > 0 && (
-              <div className="space-y-3 bg-zinc-50 p-4 rounded-lg border border-zinc-200 max-h-64 overflow-y-auto">
-                <h4 className="text-xs font-mono uppercase tracking-wider text-zinc-500 flex items-center gap-2">
-                  <Network className="w-3 h-3" /> Extraction Progress
-                </h4>
-                <div className="space-y-2">
-                  {topicLogs.map((log, i) => (
+              <div className="space-y-3 bg-zinc-50 p-4 rounded-lg border border-zinc-200">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-mono uppercase tracking-wider text-zinc-500 flex items-center gap-2">
+                    <Network className="w-3 h-3" /> Extraction Progress
+                  </h4>
+                  {topicLogs[0]?.estimatedTimeRemaining !== undefined && (
+                    <span className="text-[10px] font-mono text-zinc-400 flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      ETR: {Math.ceil(topicLogs[0].estimatedTimeRemaining / 1000)}s
+                    </span>
+                  )}
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-1 bg-zinc-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-zinc-900 transition-all duration-500" 
+                      style={{ width: `${(topicLogs[0].currentBatch / topicLogs[0].totalBatches) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-mono text-zinc-500 whitespace-nowrap">
+                    Batch {topicLogs[0].currentBatch} / {topicLogs[0].totalBatches}
+                  </span>
+                </div>
+
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  {topicLogs.filter(log => log.topic).map((log, i) => (
                     <div key={i} className="text-xs border-l-2 border-zinc-300 pl-3 py-1 space-y-1">
                       <div className="flex items-center justify-between text-zinc-400">
                         <span className="flex items-center gap-1">
@@ -190,10 +211,10 @@ export function ImportWizard() {
                       </div>
                       <div className="font-semibold text-zinc-900 flex items-center gap-1">
                         <Tag className="w-3 h-3" />
-                        {log.topic.label}
+                        {log.topic?.label}
                       </div>
                       <div className="text-zinc-500 italic">
-                        {log.convoTitles.join(', ')}
+                        {log.convoTitles?.join(', ')}
                       </div>
                     </div>
                   ))}

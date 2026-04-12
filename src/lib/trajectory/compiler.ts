@@ -6,12 +6,21 @@ export interface CompilationOptions {
   min_rating_count?: number;
 }
 
+export interface CompilationProgress {
+  currentGroup: number;
+  totalGroups: number;
+  groupLabel: string;
+  timestamp: number;
+  estimatedTimeRemaining?: number; // in ms
+}
+
 export async function compileTrajectories(
   graph: ConvoGraph,
   provider: ModelProvider,
   apiKey: string,
   config: TaskModelConfig,
-  options: CompilationOptions = {}
+  options: CompilationOptions = {},
+  onProgress?: (progress: CompilationProgress) => void
 ): Promise<TrajectoryNode[]> {
   const ratedConvos = Object.values(graph.conversations).filter(
     (c) => c.rating !== null
@@ -28,11 +37,30 @@ export async function compileTrajectories(
   });
 
   const trajectories: TrajectoryNode[] = [];
+  const groupEntries = Object.entries(groups);
+  const totalGroups = groupEntries.length;
+  const startTime = Date.now();
 
-  for (const [key, convos] of Object.entries(groups)) {
+  for (let i = 0; i < totalGroups; i++) {
+    const [key, convos] = groupEntries[i];
     const [topicId, polarity] = key.split('-');
     const tId = `traj-${key}-${Date.now()}`;
+    const currentGroup = i + 1;
     
+    if (onProgress) {
+      const elapsed = Date.now() - startTime;
+      const avgTimePerGroup = i > 0 ? elapsed / i : 0;
+      const etr = avgTimePerGroup ? avgTimePerGroup * (totalGroups - i) : undefined;
+
+      onProgress({
+        currentGroup,
+        totalGroups,
+        groupLabel: `${topicId} (${polarity})`,
+        timestamp: Date.now(),
+        estimatedTimeRemaining: etr
+      });
+    }
+
     // Extract lesson via LLM
     const lesson = await extractLesson(convos, provider, apiKey, config.modelId, config.parameters);
 
