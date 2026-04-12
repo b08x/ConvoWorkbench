@@ -9,18 +9,22 @@ import { cn } from '@/src/lib/utils';
 
 export function TrajectoryCompiler() {
   const { state, dispatch } = useGraph();
-  const { provider, apiKey } = useProvider();
+  const { getProvider, apiKeys, taskConfigs } = useProvider();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
   const handleCompile = async () => {
-    if (!apiKey) {
-      alert('Please set your API key in Settings first.');
+    const config = taskConfigs.trajectory;
+    const provider = getProvider(config.providerId);
+    const apiKey = apiKeys[config.providerId];
+
+    if (!provider || (!apiKey && config.providerId !== 'ollama')) {
+      alert(`Please set API key for ${config.providerId} in Settings first.`);
       return;
     }
     setLoading(true);
     try {
-      const trajectories = await compileTrajectories(state, provider, apiKey);
+      const trajectories = await compileTrajectories(state, provider, apiKey, config);
       dispatch({ type: 'ADD_TRAJECTORIES', payload: trajectories });
       setSuccess(true);
     } catch (err) {

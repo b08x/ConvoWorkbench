@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
 import { useGraph } from '@/src/contexts/GraphContext';
+import { useProvider } from '@/src/contexts/ProviderContext';
 import { parseClaudeExport, parseChatGPTExport } from '@/src/lib/graph/builder';
+import { extractTopics } from '@/src/lib/graph/topic_extraction';
+import { ConversationNode } from '@/src/types/graph';
 import { Button } from '@/src/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
-import { Upload, FileJson, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Upload, FileJson, CheckCircle2, AlertCircle, Loader2, Network } from 'lucide-react';
+import { Checkbox } from '@/src/components/ui/checkbox';
+import { Label } from '@/src/components/ui/label';
 
 export function ImportWizard() {
   const { dispatch } = useGraph();
+  const { getProvider, apiKeys, taskConfigs } = useProvider();
   const [source, setSource] = useState<'claude' | 'chatgpt' | null>(null);
   const [files, setFiles] = useState<Record<string, string>>({});
-  const [status, setStatus] = useState<'idle' | 'parsing' | 'success' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'parsing' | 'extracting' | 'success' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [shouldExtractTopics, setShouldExtractTopics] = useState(false);
 
   const handleFileChange = (key: string, file: File) => {
     const reader = new FileReader();
@@ -21,7 +28,7 @@ export function ImportWizard() {
     reader.readAsText(file);
   };
 
-  const handleImport = () => {
+  const handleImport = async () => {
     setStatus('parsing');
     try {
       let graph;
@@ -33,6 +40,21 @@ export function ImportWizard() {
         graph = parseChatGPTExport(files['conversations']);
       } else {
         throw new Error('Please select a source');
+      }
+
+      if (shouldExtractTopics) {
+        setStatus('extracting');
+        const config = taskConfigs.import;
+        const provider = getProvider(config.providerId);
+        const apiKey = apiKeys[config.providerId];
+        
+        if (provider && (apiKey || config.providerId === 'ollama')) {
+          const conversations = Object.values(graph.conversations).slice(0, 50) as ConversationNode[]; // Limit for v1
+          const topics = await extractTopics(conversations, provider, apiKey, config);
+          topics.forEach(t => {
+            graph.topics[t.id] = t;
+          });
+        }
       }
 
       dispatch({ type: 'SET_GRAPH', payload: graph });
@@ -129,12 +151,35 @@ export function ImportWizard() {
               )}
             </div>
 
+            <div className="space-y-4 pt-4 border-t border-zinc-100">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="extract-topics" 
+                  checked={shouldExtractTopics}
+                  onCheckedChange={(checked) => setShouldExtractTopics(checked as boolean)}
+                />
+                <div className="grid gap-1.5 leading-none">
+                  <Label htmlFor="extract-topics" className="text-sm font-medium">
+                    Extract Topics using LLM
+                  </Label>
+                  <p className="text-xs text-zinc-500">
+                    Uses the model configured for "Conversation Import" in Settings.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <Button 
               className="w-full" 
-              disabled={status === 'parsing' || !files['conversations']}
+              disabled={status === 'parsing' || status === 'extracting' || !files['conversations']}
               onClick={handleImport}
             >
-              {status === 'parsing' ? 'Processing...' : 'Build ConvoGraph'}
+              {(status === 'parsing' || status === 'extracting') ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {status === 'parsing' ? 'Parsing Files...' : 'Extracting Topics...'}
+                </span>
+              ) : 'Build ConvoGraph'}
             </Button>
 
             {status === 'success' && (

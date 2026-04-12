@@ -1,5 +1,5 @@
 import { ConvoGraph, TrajectoryNode, ConversationNode } from '../../types/graph';
-import { ModelProvider } from '../../types/provider';
+import { ModelProvider, TaskModelConfig } from '../../types/provider';
 
 export interface CompilationOptions {
   topic_id?: string;
@@ -10,6 +10,7 @@ export async function compileTrajectories(
   graph: ConvoGraph,
   provider: ModelProvider,
   apiKey: string,
+  config: TaskModelConfig,
   options: CompilationOptions = {}
 ): Promise<TrajectoryNode[]> {
   const ratedConvos = Object.values(graph.conversations).filter(
@@ -33,7 +34,7 @@ export async function compileTrajectories(
     const tId = `traj-${key}-${Date.now()}`;
     
     // Extract lesson via LLM
-    const lesson = await extractLesson(convos, provider, apiKey);
+    const lesson = await extractLesson(convos, provider, apiKey, config.modelId, config.parameters);
 
     trajectories.push({
       id: tId,
@@ -54,7 +55,9 @@ export async function compileTrajectories(
 async function extractLesson(
   convos: ConversationNode[],
   provider: ModelProvider,
-  apiKey: string
+  apiKey: string,
+  modelId: string,
+  parameters: { temperature: number; maxTokens: number }
 ): Promise<string> {
   const system = `You are a Trajectory Compiler. Your task is to extract a structured lesson from a set of rated conversation traces.
 A trace consists of messages, a rating (correctness, tone, format), and notes.
@@ -70,11 +73,10 @@ RATING: Correctness: ${c.rating?.correctness}, Tone: ${c.rating?.tone}, Format: 
 NOTES: ${c.notes}
 MESSAGES:
 ${c.messages.map(mId => {
-  // We'd need to pass the full message content here, but for brevity in this mock:
   return `[Role] Content...`; 
 }).join('\n')}
 `).join('\n---')}`;
 
-  const result = await provider.generate({ system, user }, apiKey);
+  const result = await provider.generate({ system, user }, apiKey, modelId);
   return result.text;
 }

@@ -1,29 +1,62 @@
 import { ConvoGraph, TrajectoryNode, SkillNode } from '../../types/graph';
-import { ModelProvider } from '../../types/provider';
-import { SkillFrontmatterSchema } from '../../types/skill';
-import { stringify } from 'yaml';
+import { ModelProvider, TaskModelConfig } from '../../types/provider';
 
 export async function distillSkills(
   graph: ConvoGraph,
-  provider: ModelProvider,
-  apiKey: string,
+  getProvider: (id: string) => ModelProvider | undefined,
+  apiKeys: Record<string, string>,
+  weakConfig: TaskModelConfig,
+  strongConfig: TaskModelConfig,
   topicId: string
 ): Promise<SkillNode[]> {
   const trajectories = Object.values(graph.trajectories).filter(t => {
-    // Check if any conversation in trajectory belongs to this topic
     return t.conversation_ids.some(cId => graph.topics[topicId]?.conversation_ids.includes(cId));
   });
 
   if (trajectories.length === 0) return [];
 
-  // Consolidate lessons into SKILL.md
-  const skillContent = await consolidateLessons(trajectories, provider, apiKey, graph.skills[topicId]?.content);
+  const weakProvider = getProvider(weakConfig.providerId);
+  const strongProvider = getProvider(strongConfig.providerId);
+  const weakKey = apiKeys[weakConfig.providerId];
+  const strongKey = apiKeys[strongConfig.providerId];
+
+  if (!weakProvider || !strongProvider || (!weakKey && weakConfig.providerId !== 'ollama') || (!strongKey && strongConfig.providerId !== 'ollama')) {
+    throw new Error('Missing provider or API key for distillation');
+  }
+
+  // Step 1: Weak agent distillation
+  const weakDraft = await consolidateLessons(
+    trajectories, 
+    weakProvider, 
+    weakKey, 
+    weakConfig.modelId,
+    'WEAK_AGENT_DRAFT'
+  );
+
+  // Step 2: Strong agent distillation
+  const strongDraft = await consolidateLessons(
+    trajectories, 
+    strongProvider, 
+    strongKey, 
+    strongConfig.modelId,
+    'STRONG_AGENT_DRAFT'
+  );
+
+  // Step 3: Final consolidation (Contrastive Distillation)
+  const finalContent = await contrastiveConsolidate(
+    weakDraft,
+    strongDraft,
+    strongProvider,
+    strongKey,
+    strongConfig.modelId,
+    graph.skills[topicId]?.content
+  );
 
   const skillId = topicId.toLowerCase().replace(/\s+/g, '-');
   const skill: SkillNode = {
     id: skillId,
     title: graph.topics[topicId]?.label || topicId,
-    content: skillContent,
+    content: finalContent,
     source_trajectory_ids: trajectories.map(t => t.id),
     version: (graph.skills[skillId]?.version || 0) + 1,
     gitagent_path: `skills/${skillId}/SKILL.md`,
@@ -36,24 +69,13 @@ async function consolidateLessons(
   trajectories: TrajectoryNode[],
   provider: ModelProvider,
   apiKey: string,
+  modelId: string,
+  context: string,
   existingContent?: string
 ): Promise<string> {
-  const system = `You are a Skill Distiller implementing the Trace2Skill pattern.
-Your task is to consolidate multiple trajectory lessons into a single gitagent-compatible SKILL.md file.
-Follow the format:
----
-name: <kebab-case>
-version: "1.0"
-description: <one line>
-allowed-tools: []
----
-# <Title>
-## When to Use
-## Procedure
-## Anti-Patterns
-## Examples
-
-Dominance Scoring: Positive trajectories outweigh negative ones.`;
+  const system = `You are a Skill Distiller (${context}).
+Consolidate trajectory lessons into a single gitagent-compatible SKILL.md file.
+Follow the standard SKILL.md format with frontmatter and sections.`;
 
   const user = `
 ${existingContent ? `EXISTING SKILL CONTENT:\n${existingContent}\n---` : ''}
@@ -64,6 +86,36 @@ LESSON: ${t.lesson}
 `).join('\n---')}
 `;
 
-  const result = await provider.generate({ system, user }, apiKey);
+  const result = await provider.generate({ system, user }, apiKey, modelId);
+  return result.text;
+}
+
+async function contrastiveConsolidate(
+  weakDraft: string,
+  strongDraft: string,
+  provider: ModelProvider,
+  apiKey: string,
+  modelId: string,
+  existingContent?: string
+): Promise<string> {
+  const system = `You are a Senior Skill Architect. 
+You have two drafts of a SKILL.md file: one from a weak agent and one from a strong agent.
+Your task is to perform CONTRASTIVE DISTILLATION:
+1. Identify where the weak agent missed nuances that the strong agent caught.
+2. Identify if the weak agent provided simpler, more direct instructions that are valuable.
+3. Consolidate into a final, high-quality gitagent-compatible SKILL.md.
+Follow the Trace2Skill pattern strictly.`;
+
+  const user = `
+WEAK AGENT DRAFT:
+${weakDraft}
+
+STRONG AGENT DRAFT:
+${strongDraft}
+
+${existingContent ? `EXISTING SKILL CONTENT:\n${existingContent}` : ''}
+`;
+
+  const result = await provider.generate({ system, user }, apiKey, modelId);
   return result.text;
 }

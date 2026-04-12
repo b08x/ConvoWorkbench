@@ -8,21 +8,36 @@ import { Zap, Loader2, FileText, Download } from 'lucide-react';
 
 export function SkillDistiller() {
   const { state, dispatch } = useGraph();
-  const { provider, apiKey } = useProvider();
+  const { getProvider, apiKeys, taskConfigs } = useProvider();
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleDistill = async (topicId: string) => {
-    if (!apiKey) {
-      alert('Please set your API key in Settings first.');
+    const weakConfig = taskConfigs.distillation_weak;
+    const strongConfig = taskConfigs.distillation_strong;
+    
+    if (!apiKeys[weakConfig.providerId] && weakConfig.providerId !== 'ollama') {
+      alert(`Please set API key for ${weakConfig.providerId} in Settings.`);
       return;
     }
+    if (!apiKeys[strongConfig.providerId] && strongConfig.providerId !== 'ollama') {
+      alert(`Please set API key for ${strongConfig.providerId} in Settings.`);
+      return;
+    }
+
     setLoading(topicId);
     try {
-      const skills = await distillSkills(state, provider, apiKey, topicId);
+      const skills = await distillSkills(
+        state, 
+        getProvider, 
+        apiKeys, 
+        weakConfig, 
+        strongConfig, 
+        topicId
+      );
       dispatch({ type: 'ADD_SKILLS', payload: skills });
     } catch (err) {
       console.error(err);
-      alert('Distillation failed.');
+      alert('Distillation failed. Check console for details.');
     } finally {
       setLoading(null);
     }

@@ -9,10 +9,39 @@ export interface GenerationResult {
   object?: any;
 }
 
+export interface ModelInfo {
+  id: string;
+  name: string;
+  description?: string;
+  capabilities: {
+    tools: boolean;
+    reasoning: boolean;
+    structured: boolean;
+  };
+}
+
 export interface ModelProvider {
   id: string;
   name: string;
   supportsDirectBrowser: boolean;
-  generate(prompt: GenerationPrompt, apiKey: string): Promise<GenerationResult>;
-  stream(prompt: GenerationPrompt, apiKey: string): AsyncGenerator<string>;
+  generate(prompt: GenerationPrompt, apiKey: string, modelId: string): Promise<GenerationResult>;
+  stream(prompt: GenerationPrompt, apiKey: string, modelId: string): AsyncGenerator<string>;
+  fetchModels(apiKey: string): Promise<ModelInfo[]>;
+}
+
+export type TaskType = 
+  | 'import' 
+  | 'review' 
+  | 'trajectory' 
+  | 'distillation_weak' 
+  | 'distillation_strong' 
+  | 'retrieval';
+
+export interface TaskModelConfig {
+  providerId: string;
+  modelId: string;
+  parameters: {
+    temperature: number;
+    maxTokens: number;
+  };
 }
