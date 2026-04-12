@@ -53,6 +53,23 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
     setActionResult(null);
   };
 
+  const selectAll = () => {
+    if (!conversation) return;
+    setSelectedIds(new Set(conversation.messages));
+  };
+
+  const selectUser = () => {
+    if (!conversation) return;
+    const userIds = conversation.messages.filter(mId => state.messages[mId].role === 'user');
+    setSelectedIds(new Set(userIds));
+  };
+
+  const selectAssistant = () => {
+    if (!conversation) return;
+    const assistantIds = conversation.messages.filter(mId => state.messages[mId].role === 'assistant');
+    setSelectedIds(new Set(assistantIds));
+  };
+
   const handleSummarize = async () => {
     if (selectedIds.size === 0) return;
     setLoading(true);
@@ -157,11 +174,39 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
             )}
           </div>
         </div>
-        {selectedIds.size > 0 && (
-          <Button variant="ghost" onClick={clearSelection} className="text-xs gap-2 h-8">
-            <X className="w-3 h-3" /> Clear Selection ({selectedIds.size})
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center bg-muted/50 rounded-lg p-1 border border-border/50 mr-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={selectAll} 
+              className="text-[10px] h-7 px-2 uppercase tracking-wider hover:bg-brand-orange/10 hover:text-brand-orange"
+            >
+              All
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={selectUser} 
+              className="text-[10px] h-7 px-2 uppercase tracking-wider hover:bg-brand-pink/10 hover:text-brand-pink"
+            >
+              User
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={selectAssistant} 
+              className="text-[10px] h-7 px-2 uppercase tracking-wider hover:bg-brand-orange/10 hover:text-brand-orange"
+            >
+              Model
+            </Button>
+          </div>
+          {selectedIds.size > 0 && (
+            <Button variant="ghost" onClick={clearSelection} className="text-xs gap-2 h-8">
+              <X className="w-3 h-3" /> Clear ({selectedIds.size})
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-auto p-6 space-y-8 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
