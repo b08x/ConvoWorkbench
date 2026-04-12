@@ -131,8 +131,23 @@ export function GraphInsights() {
       </CardHeader>
       <CardContent className="flex-1 overflow-auto p-6">
         {insight ? (
-          <div className="prose prose-invert prose-sm max-w-none">
-            <ReactMarkdown>{insight}</ReactMarkdown>
+          <div className="text-sm text-foreground/90 leading-relaxed space-y-4">
+            <ReactMarkdown
+              components={{
+                h1: ({ children }) => <h1 className="text-lg font-semibold text-brand-orange mt-6 mb-2 border-b border-brand-orange/20 pb-1">{children}</h1>,
+                h2: ({ children }) => <h2 className="text-base font-medium text-brand-pink mt-4 mb-2">{children}</h2>,
+                h3: ({ children }) => <h3 className="text-sm font-medium text-foreground mt-3 mb-1">{children}</h3>,
+                p: ({ children }) => <p className="mb-3 last:mb-0">{children}</p>,
+                ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 mb-3">{children}</ul>,
+                ol: ({ children }) => <ol className="list-decimal pl-4 space-y-1 mb-3">{children}</ol>,
+                li: ({ children }) => <li className="pl-1">{children}</li>,
+                strong: ({ children }) => <strong className="font-semibold text-brand-orange/90">{children}</strong>,
+                code: ({ children }) => <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-brand-pink">{children}</code>,
+                blockquote: ({ children }) => <blockquote className="border-l-2 border-brand-orange/30 pl-4 italic text-muted-foreground my-4">{children}</blockquote>,
+              }}
+            >
+              {insight}
+            </ReactMarkdown>
           </div>
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-50">
