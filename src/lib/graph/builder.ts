@@ -205,7 +205,7 @@ export function parseChatGPTExport(conversationsJson: string): ConvoGraph {
     // ChatGPT uses a tree structure, we need to flatten it to a linear thread
     // We'll find the leaf node and traverse up, then reverse
     const nodes = Object.values(c.mapping);
-    const leafNode = nodes.find(n => !n.children || n.children.length === 0);
+    const leafNode = nodes.find(n => n.children.length === 0);
     
     if (!leafNode) return;
 

@@ -4,7 +4,8 @@ import { useProvider } from '@/src/contexts/ProviderContext';
 import { cn } from '@/src/lib/utils';
 import { 
   MessageSquare, User, Bot, Clock, Tag, CheckSquare, 
-  Square, Sparkles, Search, X, Loader2, Copy, FileText
+  Square, Sparkles, Search, X, Loader2, Copy, FileText,
+  Code, Layers, Info
 } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { Card } from '@/src/components/ui/card';
@@ -54,19 +55,19 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
   };
 
   const selectAll = () => {
-    if (!conversation || !conversation.messages) return;
+    if (!conversation) return;
     setSelectedIds(new Set(conversation.messages));
   };
 
   const selectUser = () => {
-    if (!conversation || !conversation.messages) return;
-    const userIds = conversation.messages.filter(mId => state.messages[mId]?.role === 'user');
+    if (!conversation) return;
+    const userIds = conversation.messages.filter(mId => state.messages[mId].role === 'user');
     setSelectedIds(new Set(userIds));
   };
 
   const selectAssistant = () => {
-    if (!conversation || !conversation.messages) return;
-    const assistantIds = conversation.messages.filter(mId => state.messages[mId]?.role === 'assistant');
+    if (!conversation) return;
+    const assistantIds = conversation.messages.filter(mId => state.messages[mId].role === 'assistant');
     setSelectedIds(new Set(assistantIds));
   };
 
@@ -210,9 +211,8 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
       </div>
 
       <div className="flex-1 overflow-auto p-6 space-y-8 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
-        {(conversation.messages || []).map((mId) => {
+        {conversation.messages.map((mId) => {
           const message = state.messages[mId];
-          if (!message) return null;
           const isUser = message.role === 'user';
           const isSelected = selectedIds.has(mId);
 
@@ -260,6 +260,61 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
             </div>
           );
         })}
+
+        {Object.values(state.artifacts).filter(a => a.conversation_id === conversationId).length > 0 && (
+          <div className="max-w-4xl mx-auto pt-12 pb-24 border-t border-border/50">
+            <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground mb-6 flex items-center gap-2">
+              <Layers className="w-3 h-3" /> Extracted Artifacts
+            </h3>
+            <div className="grid gap-4">
+              {Object.values(state.artifacts)
+                .filter(a => a.conversation_id === conversationId)
+                .map(artifact => (
+                  <Card key={artifact.id} className="border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden group hover:border-brand-orange/30 transition-all">
+                    <div className="p-4 flex items-start gap-4">
+                      <div className="w-10 h-10 rounded bg-muted/50 flex items-center justify-center text-muted-foreground group-hover:text-brand-orange transition-colors">
+                        {artifact.type === 'code' ? <Code className="w-5 h-5" /> : <FileText className="w-5 h-5" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[10px] font-mono uppercase text-brand-orange bg-brand-orange/10 px-1.5 py-0.5 rounded">
+                            {artifact.type}
+                          </span>
+                          {artifact.language && (
+                            <span className="text-[10px] font-mono uppercase text-muted-foreground">
+                              {artifact.language}
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="text-sm font-semibold text-foreground truncate">
+                          {artifact.title || 'Untitled Artifact'}
+                        </h4>
+                        <div className="mt-4 bg-muted/20 border border-border/50 rounded-md p-4 overflow-hidden">
+                          <div className="max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+                            <div className="text-xs font-mono leading-relaxed text-foreground/80">
+                              <ReactMarkdown>
+                                {artifact.type === 'code' ? `\`\`\`${artifact.language || ''}\n${artifact.content}\n\`\`\`` : artifact.content}
+                              </ReactMarkdown>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex justify-end mt-4">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-[10px] gap-2 h-7"
+                            onClick={() => navigator.clipboard.writeText(artifact.content)}
+                          >
+                            <Copy className="w-3 h-3" /> Copy Content
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <AnimatePresence>

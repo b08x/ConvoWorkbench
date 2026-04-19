@@ -7,19 +7,13 @@ import { Button } from '@/src/components/ui/button';
 
 export function DashboardView() {
   const { state } = useGraph();
-  const stats = state?.meta?.stats || {
-    conversation_count: 0,
-    message_count: 0,
-    rated_count: 0,
-    artifact_count: 0,
-    project_doc_count: 0,
-  };
+  const stats = state.meta.stats;
 
   const cards = [
     { title: 'Conversations', value: stats.conversation_count, icon: MessageSquare, color: 'text-brand-orange' },
     { title: 'Messages', value: stats.message_count, icon: Network, color: 'text-brand-pink' },
     { title: 'Rated', value: stats.rated_count, icon: CheckCircle2, color: 'text-green-400' },
-    { title: 'Skills Distilled', value: Object.keys(state?.skills || {}).length, icon: Zap, color: 'text-brand-orange' },
+    { title: 'Skills Distilled', value: Object.keys(state.skills).length, icon: Zap, color: 'text-brand-orange' },
   ];
 
   return (
