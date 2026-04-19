@@ -8,7 +8,7 @@ export interface SessionStats {
   issues: number;
 }
 
-export type RatingFilter = 'all' | 'unrated' | 'rated' | 'issues';
+export type RatingFilter = 'all' | 'unrated' | 'rated' | 'issues' | 'artifacts';
 
 export interface RatingState {
   ratings: Map<string, ConversationRating>;

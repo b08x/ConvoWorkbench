@@ -21,7 +21,11 @@ export function ConversationList({ selectedId, onSelect }: ConversationListProps
       filter === 'all' ||
       (filter === 'unrated' && c.rating === null) ||
       (filter === 'rated' && c.rating !== null) ||
-      (filter === 'issues' && (c.rating?.tone === 'inappropriate' || c.rating?.format === 'bad'));
+      (filter === 'issues' && (c.rating?.tone === 'inappropriate' || c.rating?.format === 'bad')) ||
+      (filter === 'artifacts' && c.messages.some(mId => {
+        const msg = state.messages[mId];
+        return msg?.artifact_ids && msg.artifact_ids.length > 0;
+      }));
     
     let matchesDate = true;
     if (c.created_at) {
@@ -81,7 +85,7 @@ export function ConversationList({ selectedId, onSelect }: ConversationListProps
         </div>
 
         <div className="flex gap-1 p-1 bg-muted rounded-lg border border-border/30">
-          {(['all', 'unrated', 'rated', 'issues'] as const).map((f) => (
+          {(['all', 'unrated', 'rated', 'issues', 'artifacts'] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
