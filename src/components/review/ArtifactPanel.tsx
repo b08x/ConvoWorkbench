@@ -12,11 +12,11 @@ interface ArtifactPanelProps {
 export function ArtifactPanel({ conversationId }: ArtifactPanelProps) {
   const { state } = useGraph();
   
-  const conversationArtifacts = Object.values(state.artifacts).filter(
+  const conversationArtifacts = Object.values(state?.artifacts || {}).filter(
     a => a.conversation_id === conversationId
   );
 
-  if (conversationArtifacts.length === 0) {
+  if (!conversationArtifacts || conversationArtifacts.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center p-8 text-center text-muted-foreground border-t border-border/10">
         <div>

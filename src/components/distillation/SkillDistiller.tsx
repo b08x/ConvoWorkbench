@@ -43,9 +43,9 @@ export function SkillDistiller() {
     }
   };
 
-  const topics = Object.keys(state.topics).length > 0 
-    ? Object.keys(state.topics) 
-    : Array.from(new Set((Object.values(state.trajectories) as any[]).map(t => 'default')));
+  const topics = Object.keys(state?.topics || {}).length > 0 
+    ? Object.keys(state?.topics || {}) 
+    : Array.from(new Set((Object.values(state?.trajectories || {}) as any[]).map(t => 'default')));
 
   return (
     <div className="p-8 max-w-5xl mx-auto space-y-8">
@@ -63,7 +63,7 @@ export function SkillDistiller() {
             topics.map((topicId) => (
               <Card key={topicId} className="border-border/50 bg-card/50 backdrop-blur-sm hover:border-brand-orange/30 transition-all">
                 <CardHeader className="flex flex-row items-center justify-between py-4">
-                  <CardTitle className="text-sm font-medium text-foreground">{state.topics[topicId]?.label || 'General Skills'}</CardTitle>
+                  <CardTitle className="text-sm font-medium text-foreground">{state?.topics?.[topicId]?.label || 'General Skills'}</CardTitle>
                   <Button 
                     onClick={() => handleDistill(topicId)}
                     disabled={loading !== null}
@@ -80,10 +80,10 @@ export function SkillDistiller() {
 
         <div className="space-y-4">
           <h3 className="text-sm font-mono uppercase tracking-wider text-muted-foreground">Distilled Skills</h3>
-          {Object.values(state.skills).length === 0 ? (
+          {Object.values(state?.skills || {}).length === 0 ? (
             <p className="text-sm text-muted-foreground italic">No skills distilled yet.</p>
           ) : (
-            (Object.values(state.skills) as any[]).map((skill) => (
+            (Object.values(state?.skills || {}) as any[]).map((skill) => (
               <Card key={skill.id} className="border-border/50 bg-card/50 backdrop-blur-sm hover:border-brand-pink/30 transition-all">
                 <CardHeader className="flex flex-row items-center justify-between py-4">
                   <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">

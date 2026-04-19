@@ -101,7 +101,7 @@ export function TrajectoryCompiler() {
           <Button 
             className="w-full h-12 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(230,126,95,0.2)]" 
             onClick={handleCompile} 
-            disabled={loading || (Object.values(state.conversations) as any[]).filter(c => c.rating).length === 0}
+            disabled={loading || (Object.values(state?.conversations || {}) as any[]).filter(c => c.rating).length === 0}
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
             {loading ? 'Compiling Trajectories...' : 'Start Compilation'}
@@ -118,11 +118,11 @@ export function TrajectoryCompiler() {
 
       <div className="space-y-4">
         <h3 className="text-sm font-mono uppercase tracking-wider text-muted-foreground">Compiled Trajectories</h3>
-        {Object.values(state.trajectories).length === 0 ? (
+        {Object.values(state?.trajectories || {}).length === 0 ? (
           <p className="text-sm text-muted-foreground italic">No trajectories compiled yet.</p>
         ) : (
           <div className="grid gap-4">
-            {(Object.values(state.trajectories) as any[]).map((t) => (
+            {(Object.values(state?.trajectories || {}) as any[]).map((t) => (
               <Card key={t.id} className="border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden group hover:border-brand-orange/30 transition-all">
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start mb-2">
@@ -132,7 +132,7 @@ export function TrajectoryCompiler() {
                     )}>
                       {t.quality_signal}
                     </span>
-                    <span className="text-[10px] text-muted-foreground font-mono">{t.conversation_ids.length} traces</span>
+                    <span className="text-[10px] text-muted-foreground font-mono">{t.conversation_ids?.length || 0} traces</span>
                   </div>
                   <p className="text-sm text-foreground/90 line-clamp-3 whitespace-pre-wrap italic leading-relaxed">{t.lesson}</p>
                 </CardContent>

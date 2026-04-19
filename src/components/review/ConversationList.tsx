@@ -15,14 +15,14 @@ export function ConversationList({ selectedId, onSelect }: ConversationListProps
   const [search, setSearch] = useState('');
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
 
-  const conversations = (Object.values(state.conversations) as any[]).filter((c) => {
+  const conversations = (Object.values(state?.conversations || {}) as any[]).filter((c) => {
     const matchesSearch = c.title?.toLowerCase().includes(search.toLowerCase()) || c.id.includes(search);
     const matchesFilter = 
       filter === 'all' ||
       (filter === 'unrated' && c.rating === null) ||
       (filter === 'rated' && c.rating !== null) ||
       (filter === 'issues' && (c.rating?.tone === 'inappropriate' || c.rating?.format === 'bad')) ||
-      (filter === 'artifacts' && c.messages.some(mId => {
+      (filter === 'artifacts' && (c.messages || []).some(mId => {
         const msg = state.messages[mId];
         return msg?.artifact_ids && msg.artifact_ids.length > 0;
       }));
@@ -126,7 +126,7 @@ export function ConversationList({ selectedId, onSelect }: ConversationListProps
                 selectedId === c.id ? "text-brand-orange" : "text-foreground"
               )}>{c.title || 'Untitled Conversation'}</h4>
               <p className="text-xs text-muted-foreground mt-1 line-clamp-2 italic">
-                {state.messages[c.messages[0]]?.content.substring(0, 100)}...
+                {c.messages && c.messages.length > 0 ? state.messages[c.messages[0]]?.content.substring(0, 100) : 'No messages'}...
               </p>
             </button>
           ))

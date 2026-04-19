@@ -54,19 +54,19 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
   };
 
   const selectAll = () => {
-    if (!conversation) return;
+    if (!conversation || !conversation.messages) return;
     setSelectedIds(new Set(conversation.messages));
   };
 
   const selectUser = () => {
-    if (!conversation) return;
-    const userIds = conversation.messages.filter(mId => state.messages[mId].role === 'user');
+    if (!conversation || !conversation.messages) return;
+    const userIds = conversation.messages.filter(mId => state.messages[mId]?.role === 'user');
     setSelectedIds(new Set(userIds));
   };
 
   const selectAssistant = () => {
-    if (!conversation) return;
-    const assistantIds = conversation.messages.filter(mId => state.messages[mId].role === 'assistant');
+    if (!conversation || !conversation.messages) return;
+    const assistantIds = conversation.messages.filter(mId => state.messages[mId]?.role === 'assistant');
     setSelectedIds(new Set(assistantIds));
   };
 
@@ -210,8 +210,9 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
       </div>
 
       <div className="flex-1 overflow-auto p-6 space-y-8 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
-        {conversation.messages.map((mId) => {
+        {(conversation.messages || []).map((mId) => {
           const message = state.messages[mId];
+          if (!message) return null;
           const isUser = message.role === 'user';
           const isSelected = selectedIds.has(mId);
 

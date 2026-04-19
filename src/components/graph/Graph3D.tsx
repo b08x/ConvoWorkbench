@@ -62,13 +62,19 @@ export function Graph3D({ graph }: Graph3DProps) {
       let context = '';
       if (node.type === 'conversation') {
         const convo = graph.conversations[node.id];
-        context = `Conversation Title: ${convo.title}\nMessages: ${JSON.stringify(convo.messages.slice(0, 5))}`;
+        if (convo) {
+          context = `Conversation Title: ${convo.title}\nMessages: ${JSON.stringify((convo.messages || []).slice(0, 5))}`;
+        }
       } else if (node.type === 'topic') {
         const topic = graph.topics[node.id];
-        context = `Topic: ${topic.label}\nConversations: ${topic.conversation_ids.length}`;
+        if (topic) {
+          context = `Topic: ${topic.label}\nConversations: ${topic.conversation_ids?.length || 0}`;
+        }
       } else if (node.type === 'skill') {
         const skill = graph.skills[node.id];
-        context = `Skill: ${skill.title}\nDescription: ${skill.content}`;
+        if (skill) {
+          context = `Skill: ${skill.title}\nDescription: ${skill.content}`;
+        }
       }
 
       const prompt = {
@@ -107,7 +113,7 @@ export function Graph3D({ graph }: Graph3DProps) {
     const links: any[] = [];
 
     // Add Topics
-    Object.values(graph.topics).forEach(topic => {
+    Object.values(graph.topics || {}).forEach(topic => {
       nodes.push({
         id: topic.id,
         name: topic.label,
@@ -116,7 +122,7 @@ export function Graph3D({ graph }: Graph3DProps) {
         color: '#e67e5f' // brand-orange
       });
 
-      topic.conversation_ids.forEach(convoId => {
+      (topic.conversation_ids || []).forEach(convoId => {
         links.push({
           source: topic.id,
           target: convoId,
@@ -126,7 +132,7 @@ export function Graph3D({ graph }: Graph3DProps) {
     });
 
     // Add Conversations
-    Object.values(graph.conversations).forEach(convo => {
+    Object.values(graph.conversations || {}).forEach(convo => {
       nodes.push({
         id: convo.id,
         name: convo.title || 'Untitled',
@@ -137,7 +143,7 @@ export function Graph3D({ graph }: Graph3DProps) {
     });
 
     // Add Trajectories
-    Object.values(graph.trajectories).forEach(traj => {
+    Object.values(graph.trajectories || {}).forEach(traj => {
       nodes.push({
         id: traj.id,
         name: 'Trajectory',
@@ -146,7 +152,7 @@ export function Graph3D({ graph }: Graph3DProps) {
         color: '#ff6b9d' // brand-pink
       });
 
-      traj.conversation_ids.forEach(convoId => {
+      (traj.conversation_ids || []).forEach(convoId => {
         links.push({
           source: traj.id,
           target: convoId,
@@ -156,7 +162,7 @@ export function Graph3D({ graph }: Graph3DProps) {
     });
 
     // Add Skills
-    Object.values(graph.skills).forEach(skill => {
+    Object.values(graph.skills || {}).forEach(skill => {
       nodes.push({
         id: skill.id,
         name: skill.title,
@@ -165,7 +171,7 @@ export function Graph3D({ graph }: Graph3DProps) {
         color: '#ffffff'
       });
 
-      skill.source_trajectory_ids.forEach(trajId => {
+      (skill.source_trajectory_ids || []).forEach(trajId => {
         links.push({
           source: skill.id,
           target: trajId,
