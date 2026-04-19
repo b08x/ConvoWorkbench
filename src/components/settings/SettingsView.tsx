@@ -57,7 +57,7 @@ export function SettingsView() {
         </TabsList>
 
         <TabsContent value="providers" className="space-y-6">
-          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <Card className="border-border/50 bg-card/50 backdrop-blur-sm text-foreground">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-foreground">
                 <ShieldCheck className="w-5 h-5 text-green-400" />
@@ -107,7 +107,7 @@ export function SettingsView() {
         </TabsContent>
 
         <TabsContent value="tasks" className="space-y-6">
-          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <Card className="border-border/50 bg-card/50 backdrop-blur-sm text-foreground">
             <CardHeader>
               <CardTitle className="text-lg text-foreground">Task-Specific Configuration</CardTitle>
               <CardDescription className="text-muted-foreground">
@@ -132,7 +132,7 @@ export function SettingsView() {
                           value={config.providerId} 
                           onValueChange={(val) => setTaskConfig(task, { ...config, providerId: val, modelId: '' })}
                         >
-                          <SelectTrigger className="bg-muted/50 border-border/50">
+                          <SelectTrigger className="bg-muted/50 border-border/50 text-foreground">
                             <SelectValue placeholder="Select Provider" />
                           </SelectTrigger>
                           <SelectContent className="bg-card border-border">
@@ -149,7 +149,7 @@ export function SettingsView() {
                           value={config.modelId} 
                           onValueChange={(val) => setTaskConfig(task, { ...config, modelId: val })}
                         >
-                          <SelectTrigger className="bg-muted/50 border-border/50">
+                          <SelectTrigger className="bg-muted/50 border-border/50 text-foreground">
                             <SelectValue placeholder="Select Model" />
                           </SelectTrigger>
                           <SelectContent className="bg-card border-border">
