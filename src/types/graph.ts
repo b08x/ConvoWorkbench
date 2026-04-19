@@ -8,6 +8,7 @@ export interface MessageNode {
   project_id: string | null;
   topic_ids: string[];
   skill_ids: string[];
+  artifact_ids?: string[];
 }
 
 export interface ConversationRating {
@@ -61,6 +62,21 @@ export interface MemoryNode {
   timestamp: number | null;
 }
 
+export interface ArtifactNode {
+  id: string;
+  type: string;
+  language?: string;
+  title?: string;
+  content: string;
+}
+
+export interface ProjectDocNode {
+  id: string;
+  filename: string;
+  content: string;
+  created_at: string;
+}
+
 export interface GraphMeta {
   imported_at: number;
   version: string;
@@ -68,6 +84,8 @@ export interface GraphMeta {
     message_count: number;
     conversation_count: number;
     rated_count: number;
+    artifact_count: number;
+    project_doc_count: number;
   };
 }
 
@@ -78,5 +96,7 @@ export interface ConvoGraph {
   trajectories: Record<string, TrajectoryNode>;
   skills: Record<string, SkillNode>;
   memories: Record<string, MemoryNode>;
+  artifacts: Record<string, ArtifactNode>;
+  project_docs: Record<string, ProjectDocNode>;
   meta: GraphMeta;
 }
