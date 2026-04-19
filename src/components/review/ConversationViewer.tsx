@@ -249,8 +249,12 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
                   <span>{isUser ? 'User' : 'Assistant'}</span>
                   {isSelected && <span className="text-[8px] bg-brand-orange/20 px-1 rounded">Selected</span>}
                 </div>
-                <div className="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap font-sans selection:bg-brand-orange/30">
-                  {message.content}
+                <div className="text-sm leading-relaxed text-foreground/90 font-sans selection:bg-brand-orange/30">
+                  <MessageContent 
+                    content={message.content} 
+                    artifactIds={message.artifact_ids} 
+                    artifacts={state.artifacts} 
+                  />
                 </div>
               </div>
             </div>
@@ -403,6 +407,57 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+function MessageContent({ content, artifactIds, artifacts }: { content: string, artifactIds?: string[], artifacts: Record<string, import('@/src/types/graph').ArtifactNode> }) {
+  if (!artifactIds || artifactIds.length === 0) return <div className="whitespace-pre-wrap">{content}</div>;
+
+  const relevantArtifacts = artifactIds.map(id => artifacts[id]).filter(Boolean);
+  if (relevantArtifacts.length === 0) return <div className="whitespace-pre-wrap">{content}</div>;
+
+  // Sort by length descending to match longer strings first and prevent partial matches within matches
+  const sortedArtifacts = [...relevantArtifacts].sort((a, b) => b.content.length - a.content.length);
+
+  let parts: { text: string, artifact?: any }[] = [{ text: content }];
+
+  sortedArtifacts.forEach(artifact => {
+    const newParts: typeof parts = [];
+    parts.forEach(part => {
+      if (part.artifact) {
+        newParts.push(part);
+        return;
+      }
+
+      // Split text by artifact content, preserving the content
+      // We use a simple split for now. In a more robust version, we'd handle regex escaping.
+      const segments = part.text.split(artifact.content);
+      segments.forEach((segment, i) => {
+        if (segment) newParts.push({ text: segment });
+        if (i < segments.length - 1) {
+          newParts.push({ text: artifact.content, artifact });
+        }
+      });
+    });
+    parts = newParts;
+  });
+
+  return (
+    <div className="whitespace-pre-wrap font-sans">
+      {parts.map((part, i) => (
+        part.artifact ? (
+          <span 
+            key={i} 
+            className="inline-block bg-brand-orange/5 border border-brand-orange/20 rounded px-1 -mx-0.5 text-brand-orange/90 font-mono text-[0.95em] shadow-[0_0_15px_rgba(230,126,95,0.05)] cursor-default transition-all hover:bg-brand-orange/10 hover:border-brand-orange/40"
+            title={`Artifact: ${part.artifact.title || part.artifact.type}`}
+          >
+            {part.text}
+          </span>
+        ) : (
+          <span key={i}>{part.text}</span>
+        )
+      ))}
     </div>
   );
 }

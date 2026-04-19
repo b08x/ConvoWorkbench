@@ -1,9 +1,10 @@
 import * as React from 'react';
+import { useNavigate } from 'react-router-dom';
 import ForceGraph3D, { ForceGraphMethods } from 'react-force-graph-3d';
 import { ConvoGraph } from '@/src/types/graph';
 import * as THREE from 'three';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Volume2, BrainCircuit, MessageSquare, Target, Zap } from 'lucide-react';
+import { X, Volume2, BrainCircuit, MessageSquare, Target, Zap, ExternalLink } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { useProvider } from '@/src/contexts/ProviderContext';
 import { cn } from '@/src/lib/utils';
@@ -19,6 +20,7 @@ export function Graph3D({ graph }: Graph3DProps) {
   const [loading, setLoading] = React.useState(false);
   const [speaking, setSpeaking] = React.useState(false);
   const { getProvider, apiKeys } = useProvider();
+  const navigate = useNavigate();
 
   const playAudio = async (base64: string) => {
     try {
@@ -276,7 +278,18 @@ export function Graph3D({ graph }: Graph3DProps) {
               </div>
 
               {summary && !loading && (
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-2">
+                  {selectedNode.type === 'conversation' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 gap-2 text-[10px] uppercase tracking-wider border-border/50 hover:bg-brand-pink/10 hover:text-brand-pink hover:border-brand-pink/50 transition-all"
+                      onClick={() => navigate(`/review?id=${selectedNode.id}`)}
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      View
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="ghost"
