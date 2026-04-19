@@ -271,7 +271,7 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
               </div>
               <Button 
                 variant="ghost" 
-                className="gap-2 text-xs hover:bg-brand-orange/10 hover:text-brand-orange h-8"
+                className="gap-2 text-xs text-zinc-100 hover:bg-brand-orange/10 hover:text-brand-orange h-8"
                 onClick={handleSummarize}
                 disabled={loading}
               >
@@ -280,7 +280,7 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
               </Button>
               <Button 
                 variant="ghost" 
-                className="gap-2 text-xs hover:bg-brand-pink/10 hover:text-brand-pink h-8"
+                className="gap-2 text-xs text-zinc-100 hover:bg-brand-pink/10 hover:text-brand-pink h-8"
                 onClick={handleSearch}
                 disabled={loading}
               >
@@ -289,7 +289,7 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
               </Button>
               <Button 
                 variant="ghost" 
-                className="gap-2 text-xs text-muted-foreground h-8"
+                className="gap-2 text-xs text-zinc-400 hover:text-zinc-100 h-8"
                 onClick={clearSelection}
               >
                 <X className="w-3 h-3" />
@@ -317,13 +317,13 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
                   <X className="w-4 h-4" />
                 </Button>
               </div>
-              <div className="flex-1 overflow-auto p-6 prose prose-invert prose-sm max-w-none">
+              <div className="flex-1 overflow-auto p-6 prose prose-invert prose-sm max-w-none text-zinc-200">
                 <ReactMarkdown>{actionResult.content}</ReactMarkdown>
               </div>
               <div className="p-4 border-t border-border flex justify-end gap-2 bg-muted/30">
                 <Button 
                   variant="outline" 
-                  className="text-xs gap-2 h-8"
+                  className="text-xs gap-2 h-8 text-zinc-300 border-zinc-700 hover:bg-zinc-800 hover:text-zinc-100"
                   onClick={() => {
                     navigator.clipboard.writeText(actionResult.content);
                   }}
