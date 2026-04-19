@@ -62,12 +62,15 @@ export function Graph3D({ graph }: Graph3DProps) {
       let context = '';
       if (node.type === 'conversation') {
         const convo = graph.conversations[node.id];
-        context = `Conversation Title: ${convo.title}\nMessages: ${JSON.stringify(convo.messages.slice(0, 5))}`;
+        if (!convo) throw new Error('Conversation not found');
+        context = `Conversation Title: ${convo.title}\nMessages: ${JSON.stringify((convo.messages || []).slice(0, 5))}`;
       } else if (node.type === 'topic') {
         const topic = graph.topics[node.id];
-        context = `Topic: ${topic.label}\nConversations: ${topic.conversation_ids.length}`;
+        if (!topic) throw new Error('Topic not found');
+        context = `Topic: ${topic.label}\nConversations: ${(topic.conversation_ids || []).length}`;
       } else if (node.type === 'skill') {
         const skill = graph.skills[node.id];
+        if (!skill) throw new Error('Skill not found');
         context = `Skill: ${skill.title}\nDescription: ${skill.content}`;
       }
 
@@ -116,13 +119,15 @@ export function Graph3D({ graph }: Graph3DProps) {
         color: '#e67e5f' // brand-orange
       });
 
-      topic.conversation_ids.forEach(convoId => {
-        links.push({
-          source: topic.id,
-          target: convoId,
-          type: 'topic-convo'
+      if (topic.conversation_ids) {
+        topic.conversation_ids.forEach(convoId => {
+          links.push({
+            source: topic.id,
+            target: convoId,
+            type: 'topic-convo'
+          });
         });
-      });
+      }
     });
 
     // Add Conversations
@@ -146,13 +151,15 @@ export function Graph3D({ graph }: Graph3DProps) {
         color: '#ff6b9d' // brand-pink
       });
 
-      traj.conversation_ids.forEach(convoId => {
-        links.push({
-          source: traj.id,
-          target: convoId,
-          type: 'traj-convo'
+      if (traj.conversation_ids) {
+        traj.conversation_ids.forEach(convoId => {
+          links.push({
+            source: traj.id,
+            target: convoId,
+            type: 'traj-convo'
+          });
         });
-      });
+      }
     });
 
     // Add Skills

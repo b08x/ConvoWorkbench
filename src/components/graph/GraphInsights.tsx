@@ -75,7 +75,10 @@ export function GraphInsights() {
       // Prepare a summary of the graph for Gemini
       const summary = {
         stats: state.meta.stats,
-        topics: (Object.values(state.topics) as TopicNode[]).map(t => ({ label: t.label, count: t.conversation_ids.length })),
+        topics: (Object.values(state.topics) as TopicNode[]).map(t => ({ 
+          label: t.label, 
+          count: (t.conversation_ids || []).length 
+        })),
         skills: (Object.values(state.skills) as SkillNode[]).map(s => s.title),
         trajectories: Object.values(state.trajectories).length
       };
