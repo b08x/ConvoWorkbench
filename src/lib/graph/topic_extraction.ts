@@ -96,7 +96,7 @@ ${batch.map(c => `ID: ${c.id}, Title: ${c.title}`).join('\n')}`;
             onProgress({
               topic: allTopics[topicId],
               timestamp: Date.now(),
-              convoTitles: (t.conversation_ids || []).map((id: string) => convoMap.get(id)?.title || id),
+              convoTitles: t.conversation_ids.map((id: string) => convoMap.get(id)?.title || id),
               currentBatch,
               totalBatches,
               estimatedTimeRemaining: etr

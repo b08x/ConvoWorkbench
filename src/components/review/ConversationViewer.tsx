@@ -418,12 +418,11 @@ function MessageContent({ content, artifactIds, artifacts }: { content: string, 
   if (relevantArtifacts.length === 0) return <div className="whitespace-pre-wrap">{content}</div>;
 
   // Sort by length descending to match longer strings first and prevent partial matches within matches
-  const sortedArtifacts = [...relevantArtifacts].sort((a, b) => (b.content?.length || 0) - (a.content?.length || 0));
+  const sortedArtifacts = [...relevantArtifacts].sort((a, b) => b.content.length - a.content.length);
 
   let parts: { text: string, artifact?: any }[] = [{ text: content }];
 
   sortedArtifacts.forEach(artifact => {
-    if (!artifact.content) return;
     const newParts: typeof parts = [];
     parts.forEach(part => {
       if (part.artifact) {
@@ -437,7 +436,7 @@ function MessageContent({ content, artifactIds, artifacts }: { content: string, 
       segments.forEach((segment, i) => {
         if (segment) newParts.push({ text: segment });
         if (i < segments.length - 1) {
-          newParts.push({ text: artifact.content as string, artifact });
+          newParts.push({ text: artifact.content, artifact });
         }
       });
     });

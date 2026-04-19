@@ -132,7 +132,7 @@ export function TrajectoryCompiler() {
                     )}>
                       {t.quality_signal}
                     </span>
-                    <span className="text-[10px] text-muted-foreground font-mono">{(t.conversation_ids || []).length} traces</span>
+                    <span className="text-[10px] text-muted-foreground font-mono">{t.conversation_ids.length} traces</span>
                   </div>
                   <p className="text-sm text-foreground/90 line-clamp-3 whitespace-pre-wrap italic leading-relaxed">{t.lesson}</p>
                 </CardContent>

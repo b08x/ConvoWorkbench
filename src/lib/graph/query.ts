@@ -124,12 +124,12 @@ export function createExecutor(graph: ConvoGraph) {
     },
     topics: ({ min_size }: { min_size?: number }) => {
       let topics = Object.values(graph.topics);
-      if (min_size) topics = topics.filter((t) => (t.conversation_ids || []).length >= min_size);
+      if (min_size) topics = topics.filter((t) => t.conversation_ids.length >= min_size);
       return topics.map((t) => ({
         ...t,
-        conversations: (t.conversation_ids || []).map((id) => {
+        conversations: t.conversation_ids.map((id) => {
           const c = graph.conversations[id];
-          return { ...c, messages: (c?.messages || []).map(mId => graph.messages[mId]) };
+          return { ...c, messages: c.messages.map(mId => graph.messages[mId]) };
         }),
       }));
     },
@@ -138,9 +138,9 @@ export function createExecutor(graph: ConvoGraph) {
       if (quality) trajectories = trajectories.filter((t) => t.quality_signal === quality);
       return trajectories.map((t) => ({
         ...t,
-        conversations: (t.conversation_ids || []).map((id) => {
+        conversations: t.conversation_ids.map((id) => {
           const c = graph.conversations[id];
-          return { ...c, messages: (c?.messages || []).map(mId => graph.messages[mId]) };
+          return { ...c, messages: c.messages.map(mId => graph.messages[mId]) };
         }),
       }));
     },
