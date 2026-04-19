@@ -112,6 +112,7 @@ export function parseClaudeExport(
       p.docs.forEach((doc) => {
         graph.project_docs[doc.uuid] = {
           id: doc.uuid,
+          project_id: p.uuid,
           filename: doc.filename,
           content: doc.content,
           created_at: doc.created_at,
@@ -140,6 +141,9 @@ export function parseClaudeExport(
             const input = block.input as ArtifactInput;
             graph.artifacts[input.id] = {
               id: input.id,
+              message_id: mId,
+              conversation_id: c.uuid,
+              project_id: convoToProject.get(c.uuid) || null,
               type: input.type,
               language: input.language,
               title: input.title,

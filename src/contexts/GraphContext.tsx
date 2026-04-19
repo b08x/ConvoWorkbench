@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
-import { ConvoGraph, ConversationRating } from '../types/graph';
+import { ConvoGraph, ConversationRating, ProjectDocNode } from '../types/graph';
 import { createEmptyGraph } from '../lib/graph/builder';
 
 type Action =
   | { type: 'SET_GRAPH'; payload: ConvoGraph }
   | { type: 'UPDATE_CONVERSATION_RATING'; payload: { id: string; rating: ConversationRating | null; notes: string } }
   | { type: 'ADD_TRAJECTORIES'; payload: any[] }
-  | { type: 'ADD_SKILLS'; payload: any[] };
+  | { type: 'ADD_SKILLS'; payload: any[] }
+  | { type: 'ADD_PROJECT_DOCS'; payload: ProjectDocNode[] };
 
 const GraphContext = createContext<{
   state: ConvoGraph;
@@ -50,6 +51,10 @@ function graphReducer(state: ConvoGraph, action: Action): ConvoGraph {
       const newSkills = { ...state.skills };
       action.payload.forEach(s => newSkills[s.id] = s);
       return { ...state, skills: newSkills };
+    case 'ADD_PROJECT_DOCS':
+      const newDocs = { ...state.project_docs };
+      action.payload.forEach(d => newDocs[d.id] = d);
+      return { ...state, project_docs: newDocs };
     default:
       return state;
   }

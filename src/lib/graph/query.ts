@@ -62,6 +62,24 @@ const schemaSource = `
     gitagent_path: String!
   }
 
+  type Artifact {
+    id: ID!
+    message_id: ID!
+    conversation_id: ID!
+    project_id: ID
+    type: String!
+    language: String
+    title: String
+    content: String!
+  }
+
+  type ProjectDoc {
+    id: ID!
+    project_id: ID!
+    filename: String!
+    content: String!
+  }
+
   type Query {
     conversations(source: Source, rated: Boolean, topic_id: ID): [Conversation!]!
     conversation(id: ID!): Conversation
@@ -69,6 +87,9 @@ const schemaSource = `
     trajectories(quality: QualitySignal): [Trajectory!]!
     skills: [Skill!]!
     semantic_path(from_topic: ID!, to_topic: ID!, max_hops: Int): [Conversation!]!
+    artifacts(conversation_id: ID, type: String): [Artifact!]!
+    artifact(id: ID!): Artifact
+    project_docs(project_id: ID): [ProjectDoc!]!
   }
 `;
 
@@ -124,6 +145,18 @@ export function createExecutor(graph: ConvoGraph) {
       }));
     },
     skills: () => Object.values(graph.skills),
+    artifacts: ({ conversation_id, type }: { conversation_id?: string, type?: string }) => {
+      let artifacts = Object.values(graph.artifacts);
+      if (conversation_id) artifacts = artifacts.filter(a => a.conversation_id === conversation_id);
+      if (type) artifacts = artifacts.filter(a => a.type === type);
+      return artifacts;
+    },
+    artifact: ({ id }: { id: string }) => graph.artifacts[id] || null,
+    project_docs: ({ project_id }: { project_id?: string }) => {
+      let docs = Object.values(graph.project_docs);
+      if (project_id) docs = docs.filter(d => d.project_id === project_id);
+      return docs;
+    },
     semantic_path: ({ from_topic, to_topic, max_hops = 3 }: any) => {
       // S-Path-RAG: BFS over topic adjacency, ranked by cosine similarity
       const startTopic = graph.topics[from_topic];

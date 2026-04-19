@@ -64,6 +64,9 @@ export interface MemoryNode {
 
 export interface ArtifactNode {
   id: string;
+  message_id: string;
+  conversation_id: string;
+  project_id: string | null;
   type: string;
   language?: string;
   title?: string;
@@ -72,6 +75,7 @@ export interface ArtifactNode {
 
 export interface ProjectDocNode {
   id: string;
+  project_id: string;
   filename: string;
   content: string;
   created_at: string;
