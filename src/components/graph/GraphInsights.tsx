@@ -3,8 +3,9 @@ import { useGraph } from '@/src/contexts/GraphContext';
 import { useProvider } from '@/src/contexts/ProviderContext';
 import { Button } from '@/src/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
-import { Sparkles, Loader2, BrainCircuit, Volume2 } from 'lucide-react';
+import { Sparkles, Loader2, BrainCircuit, Volume2, ChevronLeft, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { motion, AnimatePresence } from 'motion/react';
 import { TopicNode, SkillNode } from '@/src/types/graph';
 import { cn } from '@/src/lib/utils';
 
@@ -14,6 +15,21 @@ export function GraphInsights() {
   const [insight, setInsight] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [speaking, setSpeaking] = React.useState(false);
+  const [currentIndex, setCurrentIndex] = React.useState(0);
+
+  const sections = React.useMemo(() => {
+    if (!insight) return [];
+    
+    // Split by numbered list at start of line or markdown headings
+    // We look for a line break followed by a digit and a dot, or H1-H3 headings
+    const parts = insight.split(/\n(?=\d+\.\s|#+\s)/);
+    return parts.filter(p => p.trim().length > 0);
+  }, [insight]);
+
+  // Reset index when insight changes
+  React.useEffect(() => {
+    setCurrentIndex(0);
+  }, [insight]);
 
   const playAudio = async (base64: string) => {
     try {
@@ -101,9 +117,21 @@ export function GraphInsights() {
     }
   };
 
+  const nextSlide = () => {
+    if (currentIndex < sections.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+    }
+  };
+
+  const prevSlide = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
+    }
+  };
+
   return (
-    <Card className="border-border/50 bg-card/50 backdrop-blur-sm h-full flex flex-col overflow-hidden">
-      <CardHeader className="flex flex-row items-center justify-between py-3">
+    <Card className="border-border/50 bg-card/50 backdrop-blur-sm h-full flex flex-col overflow-hidden relative group">
+      <CardHeader className="flex flex-row items-center justify-between py-3 z-10">
         <CardTitle className="text-sm font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-2">
           <BrainCircuit className="w-4 h-4 text-brand-orange" /> Gemini Graph Insights
         </CardTitle>
@@ -129,28 +157,81 @@ export function GraphInsights() {
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 overflow-auto p-6">
+
+      <CardContent className="flex-1 overflow-hidden p-0 relative">
         {insight ? (
-          <div className="text-sm text-foreground/90 leading-relaxed space-y-4">
-            <ReactMarkdown
-              components={{
-                h1: ({ children }) => <h1 className="text-lg font-semibold text-brand-orange mt-6 mb-2 border-b border-brand-orange/20 pb-1">{children}</h1>,
-                h2: ({ children }) => <h2 className="text-base font-medium text-brand-pink mt-4 mb-2">{children}</h2>,
-                h3: ({ children }) => <h3 className="text-sm font-medium text-foreground mt-3 mb-1">{children}</h3>,
-                p: ({ children }) => <p className="mb-3 last:mb-0">{children}</p>,
-                ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 mb-3">{children}</ul>,
-                ol: ({ children }) => <ol className="list-decimal pl-4 space-y-1 mb-3">{children}</ol>,
-                li: ({ children }) => <li className="pl-1">{children}</li>,
-                strong: ({ children }) => <strong className="font-semibold text-brand-orange/90">{children}</strong>,
-                code: ({ children }) => <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-brand-pink">{children}</code>,
-                blockquote: ({ children }) => <blockquote className="border-l-2 border-brand-orange/30 pl-4 italic text-muted-foreground my-4">{children}</blockquote>,
-              }}
-            >
-              {insight}
-            </ReactMarkdown>
+          <div className="h-full flex flex-col">
+            <div className="flex-1 relative overflow-hidden px-6 pt-2 pb-6">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentIndex}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  className="h-full overflow-y-auto pr-2 custom-scrollbar"
+                >
+                  <div className="text-sm text-foreground/90 leading-relaxed space-y-4 py-4">
+                    <ReactMarkdown
+                      components={{
+                        h1: ({ children }) => <h1 className="text-lg font-semibold text-brand-orange mt-2 mb-2 border-b border-brand-orange/20 pb-1">{children}</h1>,
+                        h2: ({ children }) => <h2 className="text-base font-medium text-brand-pink mt-4 mb-2">{children}</h2>,
+                        h3: ({ children }) => <h3 className="text-sm font-medium text-foreground mt-3 mb-1">{children}</h3>,
+                        p: ({ children }) => <p className="mb-3 last:mb-0">{children}</p>,
+                        ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 mb-3">{children}</ul>,
+                        ol: ({ children }) => <ol className="list-decimal pl-4 space-y-1 mb-3">{children}</ol>,
+                        li: ({ children }) => <li className="pl-1">{children}</li>,
+                        strong: ({ children }) => <strong className="font-semibold text-brand-orange/90">{children}</strong>,
+                        code: ({ children }) => <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-brand-pink">{children}</code>,
+                        blockquote: ({ children }) => <blockquote className="border-l-2 border-brand-orange/30 pl-4 italic text-muted-foreground my-4">{children}</blockquote>,
+                      }}
+                    >
+                      {sections[currentIndex]}
+                    </ReactMarkdown>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {sections.length > 1 && (
+              <div className="flex items-center justify-between px-6 py-4 border-t border-border/30 bg-background/20">
+                <div className="flex gap-1">
+                  {sections.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentIndex(i)}
+                      className={cn(
+                        "h-1.5 transition-all duration-300 rounded-full",
+                        currentIndex === i ? "w-6 bg-brand-orange" : "w-1.5 bg-border hover:bg-muted-foreground/30"
+                      )}
+                    />
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-brand-orange disabled:opacity-30"
+                    onClick={prevSlide}
+                    disabled={currentIndex === 0}
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-brand-orange disabled:opacity-30"
+                    onClick={nextSlide}
+                    disabled={currentIndex === sections.length - 1}
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-50">
+          <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4 opacity-50">
             <BrainCircuit className="w-12 h-12 text-brand-orange" />
             <p className="text-sm text-muted-foreground max-w-xs">
               Click generate to have Gemini analyze your ConvoGraph structure and provide strategic insights.
