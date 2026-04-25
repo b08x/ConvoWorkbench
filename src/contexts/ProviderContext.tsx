@@ -80,9 +80,11 @@ export function ProviderProvider({ children }: { children: ReactNode }) {
 
     try {
       const models = await provider.fetchModels(key);
+      const uniqueModels = Array.from(new Map(models.map(m => [m.id, m])).values());
+      
       setState(prev => ({
         ...prev,
-        availableModels: { ...prev.availableModels, [providerId]: models }
+        availableModels: { ...prev.availableModels, [providerId]: uniqueModels }
       }));
     } catch (err) {
       console.error(`Failed to fetch models for ${providerId}:`, err);

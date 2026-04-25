@@ -49,7 +49,7 @@ export class OpenRouterAdapter implements ModelProvider {
       capabilities: {
         tools: m.description?.toLowerCase().includes('tool') || false,
         reasoning: m.description?.toLowerCase().includes('reasoning') || m.id.includes('thought') || false,
-        structured: true, // Most modern models support it
+        structured: true,
       }
     }));
   }
