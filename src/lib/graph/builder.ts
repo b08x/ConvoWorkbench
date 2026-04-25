@@ -99,17 +99,47 @@ export function parseClaudeExport(
   memoriesJson?: string
 ): ConvoGraph {
   const graph = createEmptyGraph();
-  const conversations: ClaudeConversation[] = JSON.parse(conversationsJson);
-  const projects: ClaudeProject[] = projectsJson ? JSON.parse(projectsJson) : [];
-  const memories: ClaudeMemory[] = memoriesJson ? JSON.parse(memoriesJson) : [];
+  
+  let rawConversations;
+  try {
+    rawConversations = JSON.parse(conversationsJson);
+  } catch (e) {
+    throw new Error('Failed to parse conversations.json');
+  }
+  
+  const conversations: ClaudeConversation[] = Array.isArray(rawConversations) ? rawConversations : [];
+  
+  let rawProjects = [];
+  if (projectsJson) {
+    try {
+      const parsed = JSON.parse(projectsJson);
+      rawProjects = Array.isArray(parsed) ? parsed : (parsed?.projects || []);
+    } catch (e) {
+      console.warn('Failed to parse projects.json');
+    }
+  }
+  const projects: ClaudeProject[] = Array.isArray(rawProjects) ? rawProjects : [];
+
+  let rawMemories = [];
+  if (memoriesJson) {
+    try {
+      const parsed = JSON.parse(memoriesJson);
+      rawMemories = Array.isArray(parsed) ? parsed : (parsed?.memories || []);
+    } catch (e) {
+      console.warn('Failed to parse memories.json');
+    }
+  }
+  const memories: ClaudeMemory[] = Array.isArray(rawMemories) ? rawMemories : [];
 
   // Map conversations to projects
   const convoToProject = new Map<string, string>();
   projects.forEach((p) => {
-    p.conversations.forEach((cId) => convoToProject.set(cId, p.uuid));
+    if (!p) return;
+    p.conversations?.forEach((cId) => convoToProject.set(cId, p.uuid));
 
-    if (p.docs) {
+    if (p.docs && Array.isArray(p.docs)) {
       p.docs.forEach((doc) => {
+        if (!doc) return;
         graph.project_docs[doc.uuid] = {
           id: doc.uuid,
           project_id: p.uuid,
@@ -122,34 +152,38 @@ export function parseClaudeExport(
   });
 
   conversations.forEach((c) => {
+    if (!c) return;
     const messageIds: string[] = [];
-    c.chat_messages.forEach((m, idx) => {
+    c.chat_messages?.forEach((m, idx) => {
+      if (!m) return;
       const mId = `claude-${m.uuid || `${c.uuid}-${idx}`}`;
-      let content = m.text;
+      let content = m.text || '';
       const artifact_ids: string[] = [];
 
-      if (m.content && m.content.length > 0) {
+      if (m.content && Array.isArray(m.content) && m.content.length > 0) {
         const textBlocks = m.content
-          .filter((b) => b.type === 'text')
+          .filter((b) => b && b.type === 'text')
           .map((b) => (b as { text: string }).text);
         if (textBlocks.length > 0) {
           content = textBlocks.join('\n\n');
         }
 
         m.content.forEach((block) => {
-          if (block.type === 'tool_use' && block.name === 'artifacts') {
+          if (block && block.type === 'tool_use' && block.name === 'artifacts') {
             const input = block.input as ArtifactInput;
-            graph.artifacts[input.id] = {
-              id: input.id,
-              message_id: mId,
-              conversation_id: c.uuid,
-              project_id: convoToProject.get(c.uuid) || null,
-              type: input.type,
-              language: input.language,
-              title: input.title,
-              content: input.content,
-            };
-            artifact_ids.push(input.id);
+            if (input && input.id) {
+              graph.artifacts[input.id] = {
+                id: input.id,
+                message_id: mId,
+                conversation_id: c.uuid,
+                project_id: convoToProject.get(c.uuid) || null,
+                type: input.type,
+                language: input.language,
+                title: input.title,
+                content: input.content,
+              };
+              artifact_ids.push(input.id);
+            }
           }
         });
       }
@@ -183,6 +217,7 @@ export function parseClaudeExport(
   });
 
   memories.forEach((m) => {
+    if (!m) return;
     graph.memories[m.uuid] = {
       id: m.uuid,
       source: 'claude_memories',
