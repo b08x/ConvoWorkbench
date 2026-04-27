@@ -13,7 +13,7 @@ import { cn } from '@/src/lib/utils';
 
 export function ImportWizard() {
   const { dispatch } = useGraph();
-  const { getProvider, taskConfigs } = useProvider();
+  const { getProvider, apiKeys, taskConfigs } = useProvider();
   const [source, setSource] = useState<'claude' | 'chatgpt' | null>(null);
   const [files, setFiles] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<'idle' | 'parsing' | 'extracting' | 'success' | 'error'>('idle');
@@ -49,10 +49,11 @@ export function ImportWizard() {
         setStatus('extracting');
         const config = taskConfigs.import;
         const provider = getProvider(config.providerId);
+        const apiKey = apiKeys[config.providerId];
         
         if (provider) {
           const conversations = Object.values(graph.conversations).slice(0, 50) as ConversationNode[]; // Limit for v1
-          const topics = await extractTopics(conversations, provider, undefined, config, (progress) => {
+          const topics = await extractTopics(conversations, provider, apiKey, config, (progress) => {
             setTopicLogs(prev => [progress, ...prev]);
           });
           topics.forEach(t => {

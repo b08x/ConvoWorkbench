@@ -19,7 +19,7 @@ export function Graph3D({ graph }: Graph3DProps) {
   const [summary, setSummary] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [speaking, setSpeaking] = React.useState(false);
-  const { getProvider } = useProvider();
+  const { getProvider, apiKeys } = useProvider();
   const navigate = useNavigate();
 
   const playAudio = async (base64: string) => {
@@ -75,7 +75,7 @@ export function Graph3D({ graph }: Graph3DProps) {
         user: `Node Data: ${context}`
       };
 
-      const result = await provider.generate(prompt, undefined, 'gemini-3-flash-preview');
+      const result = await provider.generate(prompt, apiKeys['google'], 'gemini-3-flash-preview');
       setSummary(result.text);
     } catch (err) {
       console.error(err);
@@ -92,7 +92,7 @@ export function Graph3D({ graph }: Graph3DProps) {
       const provider = getProvider('google');
       if (!provider || !provider.speak) throw new Error('TTS not available');
 
-      const base64 = await provider.speak(summary, undefined);
+      const base64 = await provider.speak(summary, apiKeys['google']);
       await playAudio(base64);
     } catch (err) {
       console.error(err);

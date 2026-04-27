@@ -18,7 +18,7 @@ interface ConversationViewerProps {
 
 export function ConversationViewer({ conversationId }: ConversationViewerProps) {
   const { state, dispatch } = useGraph();
-  const { getProvider } = useProvider();
+  const { getProvider, apiKeys } = useProvider();
   const conversation = conversationId ? state.conversations[conversationId] : null;
   
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
@@ -87,7 +87,7 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
         user: selectedMessages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n')
       };
 
-      const result = await provider.generate(prompt, undefined, 'gemini-3-flash-preview');
+      const result = await provider.generate(prompt, apiKeys['google'], 'gemini-3-flash-preview');
       setActionResult({ type: 'summary', content: result.text });
     } catch (err) {
       console.error(err);
@@ -113,7 +113,7 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
         user: `Selected Text: ${selectedText}`
       };
 
-      const result = await provider.generate(prompt, undefined, 'gemini-3-flash-preview');
+      const result = await provider.generate(prompt, apiKeys['google'], 'gemini-3-flash-preview');
       setActionResult({ type: 'search', content: result.text });
     } catch (err) {
       console.error(err);

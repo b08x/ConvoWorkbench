@@ -8,7 +8,7 @@ import { Zap, Loader2, FileText, Download } from 'lucide-react';
 
 export function SkillDistiller() {
   const { state, dispatch } = useGraph();
-  const { getProvider, taskConfigs } = useProvider();
+  const { getProvider, apiKeys, taskConfigs } = useProvider();
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleDistill = async (topicId: string) => {
@@ -20,6 +20,7 @@ export function SkillDistiller() {
       const skills = await distillSkills(
         state, 
         getProvider, 
+        apiKeys,
         weakConfig, 
         strongConfig, 
         topicId

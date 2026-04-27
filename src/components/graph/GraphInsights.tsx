@@ -11,7 +11,7 @@ import { cn } from '@/src/lib/utils';
 
 export function GraphInsights() {
   const { state } = useGraph();
-  const { getProvider } = useProvider();
+  const { getProvider, apiKeys } = useProvider();
   const [insight, setInsight] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [speaking, setSpeaking] = React.useState(false);
@@ -69,7 +69,7 @@ export function GraphInsights() {
 
       // Strip markdown for better TTS
       const cleanText = insight.replace(/[#*`]/g, '').slice(0, 2000); // Limit length for TTS
-      const base64 = await provider.speak(cleanText, undefined);
+      const base64 = await provider.speak(cleanText, apiKeys['google']);
       await playAudio(base64);
     } catch (err) {
       console.error(err);
@@ -102,7 +102,7 @@ export function GraphInsights() {
         4. Recommendations for further exploration or distillation.`
       };
 
-      const result = await provider.generate(prompt, undefined, 'gemini-3-flash-preview');
+      const result = await provider.generate(prompt, apiKeys['google'], 'gemini-3-flash-preview');
       setInsight(result.text);
     } catch (err) {
       console.error(err);

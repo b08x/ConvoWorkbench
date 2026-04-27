@@ -3,7 +3,7 @@ import { GenerationPrompt, GenerationResult, ModelProvider, ModelInfo } from '..
 export class OllamaAdapter implements ModelProvider {
   id = 'ollama';
   name = 'Ollama (Local)';
-  supportsDirectBrowser = false;
+  supportsDirectBrowser = true;
 
   private getBaseUrl(apiKey?: string) {
     // For Ollama, the "apiKey" field can be used for the URL if the user wants to override localhost

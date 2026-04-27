@@ -22,8 +22,10 @@ const TASK_LABELS: Record<TaskType, string> = {
 export function SettingsView() {
   const { 
     providers, 
+    apiKeys,
     taskConfigs, 
     availableModels, 
+    setApiKey,
     setTaskConfig, 
     refreshModels 
   } = useProvider();
@@ -73,21 +75,41 @@ export function SettingsView() {
 
               <div className="grid gap-4">
                 {providers.map((p) => (
-                  <div key={p.id} className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border/50">
-                    <div className="space-y-1">
-                      <Label className="text-foreground font-medium">{p.name}</Label>
-                      <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">
-                        {availableModels[p.id]?.length || 0} Models Active
-                      </p>
+                  <div key={p.id} className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/50">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <Label className="text-foreground font-medium">{p.name}</Label>
+                        <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">
+                          {availableModels[p.id]?.length || 0} Models Active
+                        </p>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="h-8 gap-1 text-xs border-border/50 hover:bg-brand-orange/10 hover:text-brand-orange hover:border-brand-orange/30"
+                        onClick={() => refreshModels(p.id)}
+                      >
+                        <RefreshCw className="w-3 h-3" /> Sync
+                      </Button>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="h-8 gap-1 text-xs border-border/50 hover:bg-brand-orange/10 hover:text-brand-orange hover:border-brand-orange/30"
-                      onClick={() => refreshModels(p.id)}
-                    >
-                      <RefreshCw className="w-3 h-3" /> Sync
-                    </Button>
+                    {p.id === 'ollama' && (
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="http://localhost:11434"
+                          value={apiKeys[p.id] || ''}
+                          onChange={(e) => setApiKey(p.id, e.target.value)}
+                          className="h-8 bg-background/50 border-border/50 text-xs"
+                        />
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 px-2 text-[10px] uppercase font-bold"
+                          onClick={() => setApiKey(p.id, '')}
+                        >
+                          Reset
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

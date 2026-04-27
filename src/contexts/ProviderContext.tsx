@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
 import { ModelProvider, TaskType, TaskModelConfig, ModelInfo } from '../types/provider';
 import { ProxyAdapter } from '../lib/providers/proxy';
+import { OllamaAdapter } from '../lib/providers/ollama';
 
 interface ProviderState {
+  apiKeys: Record<string, string>;
   taskConfigs: Record<TaskType, TaskModelConfig>;
   availableModels: Record<string, ModelInfo[]>;
 }
@@ -18,8 +20,10 @@ const DEFAULT_CONFIGS: Record<TaskType, TaskModelConfig> = {
 
 const ProviderContext = createContext<{
   providers: ModelProvider[];
+  apiKeys: Record<string, string>;
   taskConfigs: Record<TaskType, TaskModelConfig>;
   availableModels: Record<string, ModelInfo[]>;
+  setApiKey: (providerId: string, key: string) => void;
   setTaskConfig: (task: TaskType, config: TaskModelConfig) => void;
   refreshModels: (providerId: string) => Promise<void>;
   getProvider: (id: string) => ModelProvider | undefined;
@@ -31,20 +35,33 @@ export function ProviderProvider({ children }: { children: ReactNode }) {
     new ProxyAdapter('openrouter', 'OpenRouter'),
     new ProxyAdapter('mistral', 'Mistral'),
     new ProxyAdapter('groq', 'Groq'),
-    new ProxyAdapter('ollama', 'Ollama (Local)'),
+    new OllamaAdapter(),
   ], []);
 
   const [state, setState] = useState<ProviderState>(() => {
+    const savedKeys = sessionStorage.getItem('convo_workbench_api_keys');
     const savedConfigs = sessionStorage.getItem('convo_workbench_task_configs');
     return {
+      apiKeys: savedKeys ? JSON.parse(savedKeys) : {},
       taskConfigs: savedConfigs ? JSON.parse(savedConfigs) : DEFAULT_CONFIGS,
       availableModels: {},
     };
   });
 
   useEffect(() => {
+    sessionStorage.setItem('convo_workbench_api_keys', JSON.stringify(state.apiKeys));
+  }, [state.apiKeys]);
+
+  useEffect(() => {
     sessionStorage.setItem('convo_workbench_task_configs', JSON.stringify(state.taskConfigs));
   }, [state.taskConfigs]);
+
+  const setApiKey = (providerId: string, key: string) => {
+    setState(prev => ({
+      ...prev,
+      apiKeys: { ...prev.apiKeys, [providerId]: key }
+    }));
+  };
 
   const setTaskConfig = (task: TaskType, config: TaskModelConfig) => {
     setState(prev => ({
@@ -58,7 +75,8 @@ export function ProviderProvider({ children }: { children: ReactNode }) {
     if (!provider) return;
 
     try {
-      const models = await provider.fetchModels(undefined);
+      const key = state.apiKeys[providerId];
+      const models = await provider.fetchModels(key);
       const uniqueModels = Array.from(new Map(models.map(m => [m.id, m])).values());
       
       setState(prev => ({
@@ -75,8 +93,10 @@ export function ProviderProvider({ children }: { children: ReactNode }) {
   return (
     <ProviderContext.Provider value={{ 
       providers, 
+      apiKeys: state.apiKeys,
       taskConfigs: state.taskConfigs, 
       availableModels: state.availableModels,
+      setApiKey,
       setTaskConfig,
       refreshModels,
       getProvider
