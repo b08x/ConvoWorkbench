@@ -5,39 +5,47 @@ export class ProxyAdapter implements ModelProvider {
   
   supportsDirectBrowser = false;
 
-  async generate(prompt: GenerationPrompt, _apiKey: string | undefined, modelId: string): Promise<GenerationResult> {
+  async generate(prompt: GenerationPrompt, apiKey: string | undefined, modelId: string): Promise<GenerationResult> {
     const response = await fetch('/api/llm/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         providerId: this.id,
         modelId,
-        prompt
+        prompt,
+        apiKey
       })
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to generate');
+      const errorData = await response.json();
+      const message = typeof errorData.error === 'object' 
+        ? errorData.error.message || JSON.stringify(errorData.error)
+        : errorData.error || 'Failed to generate';
+      throw new Error(message);
     }
 
     return response.json();
   }
 
-  async *stream(prompt: GenerationPrompt, _apiKey: string | undefined, modelId: string): AsyncGenerator<string> {
+  async *stream(prompt: GenerationPrompt, apiKey: string | undefined, modelId: string): AsyncGenerator<string> {
     const response = await fetch('/api/llm/stream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         providerId: this.id,
         modelId,
-        prompt
+        prompt,
+        apiKey
       })
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to stream');
+      const errorData = await response.json();
+      const message = typeof errorData.error === 'object' 
+        ? errorData.error.message || JSON.stringify(errorData.error)
+        : errorData.error || 'Failed to stream';
+      throw new Error(message);
     }
 
     const reader = response.body?.getReader();
@@ -79,19 +87,23 @@ export class ProxyAdapter implements ModelProvider {
     return response.json();
   }
 
-  async speak(text: string, _apiKey: string | undefined): Promise<string> {
+  async speak(text: string, apiKey: string | undefined): Promise<string> {
     const response = await fetch('/api/llm/speak', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         providerId: this.id,
-        text
+        text,
+        apiKey
       })
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to generate speech');
+      const errorData = await response.json();
+      const message = typeof errorData.error === 'object' 
+        ? errorData.error.message || JSON.stringify(errorData.error)
+        : errorData.error || 'Failed to generate speech';
+      throw new Error(message);
     }
 
     const data = await response.json();

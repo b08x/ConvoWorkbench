@@ -32,7 +32,7 @@ async function startServer() {
   const getApiKey = (providerId: string) => {
     switch (providerId) {
       case 'google':
-      case 'gemini': return process.env.GEMINI_API_KEY;
+      case 'gemini': return process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
       case 'openrouter': return process.env.OPENROUTER_API_KEY;
       case 'mistral': return process.env.MISTRAL_API_KEY;
       case 'groq': return process.env.GROQ_API_KEY;
@@ -62,11 +62,11 @@ async function startServer() {
 
   app.post("/api/llm/generate", async (req, res) => {
     try {
-      const { providerId, modelId, prompt } = req.body;
+      const { providerId, modelId, prompt, apiKey: clientApiKey } = req.body;
       const provider = providers[providerId as keyof typeof providers] as ModelProvider;
       if (!provider) return res.status(404).json({ error: "Provider not found" });
 
-      const apiKey = getApiKey(providerId);
+      const apiKey = clientApiKey || getApiKey(providerId);
       const result = await provider.generate(prompt, apiKey, modelId);
       res.json(result);
     } catch (error: any) {
@@ -78,11 +78,11 @@ async function startServer() {
   // But for now, let's implement basic streaming if possible
   app.post("/api/llm/stream", async (req, res) => {
     try {
-      const { providerId, modelId, prompt } = req.body;
+      const { providerId, modelId, prompt, apiKey: clientApiKey } = req.body;
       const provider = providers[providerId as keyof typeof providers] as ModelProvider;
       if (!provider) return res.status(404).json({ error: "Provider not found" });
 
-      const apiKey = getApiKey(providerId);
+      const apiKey = clientApiKey || getApiKey(providerId);
       
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
@@ -106,11 +106,11 @@ async function startServer() {
 
   app.post("/api/llm/speak", async (req, res) => {
     try {
-      const { providerId, text } = req.body;
+      const { providerId, text, apiKey: clientApiKey } = req.body;
       const provider = providers[providerId as keyof typeof providers] as ModelProvider;
       if (!provider || !provider.speak) return res.status(404).json({ error: "Provider or speak method not found" });
 
-      const apiKey = getApiKey(providerId);
+      const apiKey = clientApiKey || getApiKey(providerId);
       const base64Audio = await provider.speak(text, apiKey);
       res.json({ audio: base64Audio });
     } catch (error: any) {

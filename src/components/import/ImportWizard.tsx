@@ -192,7 +192,9 @@ export function ImportWizard() {
                   <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-brand-orange transition-all duration-500 shadow-[0_0_10px_rgba(230,126,95,0.5)]" 
-                      style={{ width: `${(topicLogs[0].currentBatch / topicLogs[0].totalBatches) * 100}%` }}
+                      style={{ 
+                        width: `${Math.min(100, Math.max(0, (topicLogs[0].totalBatches > 0 ? (topicLogs[0].currentBatch / topicLogs[0].totalBatches) * 100 : 0)))}%` 
+                      }}
                     />
                   </div>
                   <span className="text-[10px] font-mono text-muted-foreground whitespace-nowrap">

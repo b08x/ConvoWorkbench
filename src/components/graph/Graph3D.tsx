@@ -220,7 +220,8 @@ export function Graph3D({ graph }: Graph3DProps) {
           generateNodeSummary(node);
           // Aim at node from outside it
           const distance = 40;
-          const distRatio = 1 + distance/Math.hypot(node.x, node.y, node.z);
+          const hypot = Math.hypot(node.x, node.y, node.z);
+          const distRatio = hypot > 0 ? 1 + distance / hypot : 1;
 
           fgRef.current?.cameraPosition(
             { x: node.x * distRatio, y: node.y * distRatio, z: node.z * distRatio }, // new pos

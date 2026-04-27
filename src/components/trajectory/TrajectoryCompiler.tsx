@@ -84,7 +84,9 @@ export function TrajectoryCompiler() {
                 <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-brand-pink transition-all duration-500 shadow-[0_0_10px_rgba(255,107,157,0.5)]" 
-                    style={{ width: `${(currentProgress.currentGroup / currentProgress.totalGroups) * 100}%` }}
+                    style={{ 
+                      width: `${Math.min(100, Math.max(0, (currentProgress.totalGroups > 0 ? (currentProgress.currentGroup / currentProgress.totalGroups) * 100 : 0)))}%` 
+                    }}
                   />
                 </div>
                 <span className="text-[10px] font-mono text-muted-foreground whitespace-nowrap">

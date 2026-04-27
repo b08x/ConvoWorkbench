@@ -8,19 +8,22 @@ export interface TopicExtractionProgress {
   currentBatch: number;
   totalBatches: number;
   estimatedTimeRemaining?: number; // in ms
+  progress: number;
 }
 
 export async function extractTopics(
   conversations: ConversationNode[],
   provider: ModelProvider,
-  apiKey: string,
+  apiKey: string | undefined,
   config: TaskModelConfig,
   onProgress?: (progress: TopicExtractionProgress) => void
 ): Promise<TopicNode[]> {
+  if (conversations.length === 0) return [];
+
   const BATCH_SIZE = 10;
   const allTopics: Record<string, TopicNode> = {};
   const convoMap = new Map(conversations.map(c => [c.id, c]));
-  const totalBatches = Math.ceil(conversations.length / BATCH_SIZE);
+  const totalBatches = Math.max(1, Math.ceil(conversations.length / BATCH_SIZE));
   const startTime = Date.now();
 
   for (let i = 0; i < conversations.length; i += BATCH_SIZE) {
@@ -36,6 +39,7 @@ export async function extractTopics(
       onProgress({
         currentBatch,
         totalBatches,
+        progress: (currentBatch / totalBatches) * 100,
         timestamp: Date.now(),
         estimatedTimeRemaining: etr
       });
@@ -70,20 +74,42 @@ ${batch.map(c => `ID: ${c.id}, Title: ${c.title}`).join('\n')}`;
     }, apiKey, config.modelId);
 
     try {
-      const batchTopics = typeof result.object === 'string' ? JSON.parse(result.object) : result.object;
+      let batchTopics = result.object;
+      
+      // If result.object is not set or not an array, try parsing text
+      if (!Array.isArray(batchTopics)) {
+        try {
+          const jsonMatch = result.text.match(/\[[\s\S]*\]/);
+          if (jsonMatch) {
+            batchTopics = JSON.parse(jsonMatch[0]);
+          } else if (typeof result.object === 'object' && result.object !== null) {
+            // Handle case where it returned { "topics": [...] }
+            const values = Object.values(result.object);
+            const foundArray = values.find(v => Array.isArray(v));
+            if (foundArray) batchTopics = foundArray;
+          }
+        } catch (e) {
+          console.error('Inner parse failed:', e);
+        }
+      }
       
       if (Array.isArray(batchTopics)) {
         batchTopics.forEach((t: any) => {
-          const topicId = t.id;
+          const topicId = t.id || `topic-${Math.random().toString(36).slice(2, 7)}`;
+          const label = t.label || 'Unlabeled Topic';
+          const convoIds = Array.isArray(t.conversation_ids) ? t.conversation_ids : [];
+
           if (allTopics[topicId]) {
             // Merge
             allTopics[topicId].conversation_ids = Array.from(new Set([
               ...allTopics[topicId].conversation_ids,
-              ...t.conversation_ids
+              ...convoIds
             ]));
           } else {
             allTopics[topicId] = {
-              ...t,
+              id: topicId,
+              label,
+              conversation_ids: convoIds,
               centroid_vector: [],
             };
           }
@@ -96,15 +122,16 @@ ${batch.map(c => `ID: ${c.id}, Title: ${c.title}`).join('\n')}`;
             onProgress({
               topic: allTopics[topicId],
               timestamp: Date.now(),
-              convoTitles: t.conversation_ids.map((id: string) => convoMap.get(id)?.title || id),
+              convoTitles: convoIds.map((id: string) => convoMap.get(id)?.title || id),
               currentBatch,
               totalBatches,
+              progress: (currentBatch / totalBatches) * 100,
               estimatedTimeRemaining: etr
             });
           }
         });
       } else {
-        console.warn('Batch topics result is not an array:', batchTopics);
+        console.warn('Batch topics result is not an array:', result);
       }
     } catch (e) {
       console.error('Failed to parse topics for batch:', e);
