@@ -32,7 +32,7 @@ async function startServer() {
   const getApiKey = (providerId: string) => {
     switch (providerId) {
       case 'google':
-      case 'gemini': return process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+      case 'gemini': return process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
       case 'openrouter': return process.env.OPENROUTER_API_KEY;
       case 'mistral': return process.env.MISTRAL_API_KEY;
       case 'groq': return process.env.GROQ_API_KEY;
