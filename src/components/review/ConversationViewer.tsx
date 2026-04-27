@@ -146,73 +146,49 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
     clearSelection();
   };
 
+  const [viewFilter, setViewFilter] = React.useState<'all' | 'user' | 'assistant'>('all');
+
+  const filteredMessages = React.useMemo(() => {
+    if (!conversation) return [];
+    if (viewFilter === 'all') return conversation.messages;
+    return conversation.messages.filter(mId => state.messages[mId].role === viewFilter);
+  }, [conversation, viewFilter, state.messages]);
+
   if (!conversation) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-background text-muted-foreground">
+      <div className="flex-1 flex items-center justify-center bg-[#0a0a0a] text-muted-foreground/20">
         <div className="text-center">
-          <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-10" />
-          <p className="font-mono uppercase tracking-widest text-xs">Select a conversation to review</p>
+          <MessageSquare className="w-16 h-16 mx-auto mb-6 opacity-5" />
+          <p className="font-mono uppercase tracking-[0.3em] text-[10px]">Select Node to Inspect</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-background overflow-hidden relative">
-      <div className="p-6 border-b border-border flex justify-between items-center bg-card/30">
-        <div>
-          <h2 className="text-xl font-bold text-foreground">{conversation.title || 'Untitled Conversation'}</h2>
-          <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {conversation.source}
-            </div>
-            {conversation.project_id && (
-              <div className="flex items-center gap-1">
-                <Tag className="w-3 h-3" />
-                Project: {conversation.project_id}
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center bg-muted/50 rounded-lg p-1 border border-border/50 mr-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={selectAll} 
-              className="text-[10px] h-7 px-2 uppercase tracking-wider hover:bg-brand-orange/10 hover:text-brand-orange"
+    <div className="flex-1 flex flex-col h-full bg-[#0a0a0a] overflow-hidden relative">
+      <div className="p-8 border-b border-border/10 bg-[#0a0a0a]">
+        <h2 className="text-xl font-bold text-foreground leading-tight">{conversation.title || 'Untitled Conversation'}</h2>
+        <div className="flex gap-4 mt-6">
+          {(['all', 'user', 'assistant'] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setViewFilter(v)}
+              className={cn(
+                "px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest transition-all",
+                viewFilter === v ? "text-brand-orange bg-brand-orange/10 rounded-sm" : "text-muted-foreground/40 hover:text-muted-foreground/70"
+              )}
             >
-              All
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={selectUser} 
-              className="text-[10px] h-7 px-2 uppercase tracking-wider hover:bg-brand-pink/10 hover:text-brand-pink"
-            >
-              User
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={selectAssistant} 
-              className="text-[10px] h-7 px-2 uppercase tracking-wider hover:bg-brand-orange/10 hover:text-brand-orange"
-            >
-              Model
-            </Button>
-          </div>
-          {selectedIds.size > 0 && (
-            <Button variant="ghost" onClick={clearSelection} className="text-xs gap-2 h-8">
-              <X className="w-3 h-3" /> Clear ({selectedIds.size})
-            </Button>
-          )}
+              {v === 'assistant' ? 'MODEL' : v}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-6 space-y-8 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
-        {conversation.messages.map((mId) => {
+      <div className="flex-1 overflow-y-auto px-8 py-12 space-y-12 custom-scrollbar">
+        {filteredMessages.map((mId) => {
           const message = state.messages[mId];
+          if (!message) return null;
           const isUser = message.role === 'user';
           const isSelected = selectedIds.has(mId);
 
@@ -220,36 +196,20 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
             <div 
               key={mId} 
               className={cn(
-                "flex gap-4 max-w-4xl mx-auto group relative transition-colors p-4 rounded-xl",
-                isSelected ? "bg-brand-orange/5 ring-1 ring-brand-orange/20" : "hover:bg-muted/30"
+                "max-w-4xl group relative transition-all",
+                isSelected && "bg-brand-orange/[0.02] -mx-4 px-4 rounded-sm ring-1 ring-brand-orange/10"
               )}
               onClick={() => toggleSelection(mId)}
             >
-              <div className="absolute left-[-2rem] top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                {isSelected ? (
-                  <CheckSquare className="w-4 h-4 text-brand-orange" />
-                ) : (
-                  <Square className="w-4 h-4 text-muted-foreground" />
-                )}
-              </div>
-
-              <div className={cn(
-                "w-8 h-8 rounded flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110",
-                isUser 
-                  ? "bg-brand-pink/10 text-brand-pink border border-brand-pink/20" 
-                  : "bg-brand-orange/10 text-brand-orange border border-brand-orange/20"
-              )}>
-                {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-              </div>
-              <div className="flex-1 space-y-2">
+              <div className="space-y-4">
                 <div className={cn(
-                  "text-[10px] font-mono uppercase tracking-wider flex justify-between items-center",
-                  isUser ? "text-brand-pink" : "text-brand-orange"
+                  "text-[10px] font-bold uppercase tracking-[0.2em] flex items-center gap-2",
+                  isUser ? "text-brand-pink/70" : "text-brand-orange/70"
                 )}>
-                  <span>{isUser ? 'User' : 'Assistant'}</span>
-                  {isSelected && <span className="text-[8px] bg-brand-orange/20 px-1 rounded">Selected</span>}
+                  {isUser ? 'USER' : 'ASSISTANT'}
+                  {isSelected && <span className="h-1 w-1 rounded-full bg-brand-orange animate-pulse" />}
                 </div>
-                <div className="text-sm leading-relaxed text-foreground/90 font-sans selection:bg-brand-orange/30">
+                <div className="text-sm leading-relaxed text-foreground/80 font-sans selection:bg-brand-orange/30 whitespace-pre-wrap">
                   <MessageContent 
                     content={message.content} 
                     artifactIds={message.artifact_ids} 
@@ -262,50 +222,50 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
         })}
 
         {Object.values(state.artifacts).filter(a => a.conversation_id === conversationId).length > 0 && (
-          <div className="max-w-4xl mx-auto pt-12 pb-24 border-t border-border/50">
-            <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground mb-6 flex items-center gap-2">
+          <div className="max-w-4xl pt-12 pb-24 border-t border-border/10">
+            <h3 className="text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground/30 mb-8 flex items-center gap-2 font-bold">
               <Layers className="w-3 h-3" /> Extracted Artifacts
             </h3>
-            <div className="grid gap-4">
+            <div className="grid gap-6">
               {Object.values(state.artifacts)
                 .filter(a => a.conversation_id === conversationId)
                 .map(artifact => (
-                  <Card key={artifact.id} className="border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden group hover:border-brand-orange/30 transition-all">
-                    <div className="p-4 flex items-start gap-4">
-                      <div className="w-10 h-10 rounded bg-muted/50 flex items-center justify-center text-muted-foreground group-hover:text-brand-orange transition-colors">
-                        {artifact.type === 'code' ? <Code className="w-5 h-5" /> : <FileText className="w-5 h-5" />}
+                  <Card key={artifact.id} className="border-border/10 bg-[#111] rounded-sm overflow-hidden group hover:border-brand-orange/20 transition-all">
+                    <div className="p-6 flex items-start gap-6">
+                      <div className="w-12 h-12 rounded-sm bg-muted/5 flex items-center justify-center text-muted-foreground/30 group-hover:text-brand-orange transition-colors">
+                        {artifact.type === 'code' ? <Code className="w-6 h-6" /> : <FileText className="w-6 h-6" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[10px] font-mono uppercase text-brand-orange bg-brand-orange/10 px-1.5 py-0.5 rounded">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="text-[9px] font-mono font-bold uppercase text-brand-orange/80 bg-brand-orange/5 px-2 py-0.5 rounded-sm tracking-widest border border-brand-orange/10">
                             {artifact.type}
                           </span>
                           {artifact.language && (
-                            <span className="text-[10px] font-mono uppercase text-muted-foreground">
+                            <span className="text-[9px] font-mono font-bold uppercase text-muted-foreground/40 tracking-widest">
                               {artifact.language}
                             </span>
                           )}
                         </div>
-                        <h4 className="text-sm font-semibold text-foreground truncate">
+                        <h4 className="text-base font-bold text-foreground/90 mb-6 font-mono tracking-tight">
                           {artifact.title || 'Untitled Artifact'}
                         </h4>
-                        <div className="mt-4 bg-muted/20 border border-border/50 rounded-md p-4 overflow-hidden">
-                          <div className="max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
-                            <div className="text-xs font-mono leading-relaxed text-foreground/80">
+                        <div className="bg-[#050505] border border-border/10 rounded-sm p-6 overflow-hidden">
+                          <div className="max-h-96 overflow-y-auto custom-scrollbar">
+                            <div className="text-xs font-mono leading-relaxed text-foreground/70">
                               <ReactMarkdown>
                                 {artifact.type === 'code' ? `\`\`\`${artifact.language || ''}\n${artifact.content}\n\`\`\`` : artifact.content}
                               </ReactMarkdown>
                             </div>
                           </div>
                         </div>
-                        <div className="flex justify-end mt-4">
+                        <div className="flex justify-end mt-6">
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="text-[10px] gap-2 h-7"
+                            className="text-[10px] font-bold uppercase tracking-widest gap-2 h-8 px-4 hover:bg-white/5"
                             onClick={() => navigator.clipboard.writeText(artifact.content)}
                           >
-                            <Copy className="w-3 h-3" /> Copy Content
+                            <Copy className="w-3.5 h-3.5" /> Copy
                           </Button>
                         </div>
                       </div>

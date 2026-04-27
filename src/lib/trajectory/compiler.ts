@@ -29,7 +29,7 @@ export async function compileTrajectories(
   // Group by topic + polarity
   const groups: Record<string, ConversationNode[]> = {};
   ratedConvos.forEach((c) => {
-    const topicId = Object.values(graph.topics).find(t => t.conversation_ids.includes(c.id))?.id || 'default';
+    const topicId = Object.values(graph.topics).find(t => t.conversation_ids?.includes(c.id))?.id || 'default';
     const polarity = c.rating?.correctness === 'correct' ? 'positive' : 'negative';
     const key = `${topicId}-${polarity}`;
     if (!groups[key]) groups[key] = [];

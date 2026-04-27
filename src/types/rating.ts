@@ -4,11 +4,11 @@ export interface SessionStats {
   total: number;
   rated: number;
   correct: number;
-  incorrect: number;
+  fail: number;
   issues: number;
 }
 
-export type RatingFilter = 'all' | 'unrated' | 'rated' | 'issues' | 'artifacts';
+export type RatingFilter = 'all' | 'unrated' | 'rated' | 'issues';
 
 export interface RatingState {
   ratings: Map<string, ConversationRating>;

@@ -10,7 +10,7 @@ export async function distillSkills(
   topicId: string
 ): Promise<SkillNode[]> {
   const trajectories = Object.values(graph.trajectories).filter(t => {
-    return t.conversation_ids.some(cId => graph.topics[topicId]?.conversation_ids.includes(cId));
+    return (t.conversation_ids || []).some(cId => graph.topics[topicId]?.conversation_ids?.includes(cId));
   });
 
   if (trajectories.length === 0) return [];

@@ -36,11 +36,11 @@ export class MistralAdapter implements ModelProvider {
       const data = await response.json();
 
       return data.data.map((m: any) => ({
-        id: m.id,
-        name: m.id,
+        id: m.id || '',
+        name: m.id || 'Unknown Model',
         capabilities: {
           tools: true,
-          reasoning: m.id.includes('large') || m.id.includes('pixtral'),
+          reasoning: m.id?.includes('large') || m.id?.includes('pixtral') || false,
           structured: true,
         }
       }));

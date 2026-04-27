@@ -43,12 +43,12 @@ export class OpenRouterAdapter implements ModelProvider {
     const data = await response.json();
 
     return data.data.map((m: any) => ({
-      id: m.id,
-      name: m.name,
+      id: m.id || '',
+      name: m.name || m.id || 'Unknown Model',
       description: m.description,
       capabilities: {
         tools: m.description?.toLowerCase().includes('tool') || false,
-        reasoning: m.description?.toLowerCase().includes('reasoning') || m.id.includes('thought') || false,
+        reasoning: m.description?.toLowerCase().includes('reasoning') || m.id?.includes('thought') || false,
         structured: true,
       }
     }));

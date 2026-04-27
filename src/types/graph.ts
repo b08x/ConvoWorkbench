@@ -12,10 +12,14 @@ export interface MessageNode {
 }
 
 export interface ConversationRating {
-  correctness: 'correct' | 'incorrect' | 'neutral' | null;
-  tone: 'appropriate' | 'inappropriate' | 'neutral' | null;
+  correctness: 'correct' | 'fail' | 'neutral' | null;
+  tone: 'good' | 'issues' | 'neutral' | null;
   format: 'good' | 'bad' | 'neutral' | null;
   style_tags: string[];
+  intent: 'refactor' | 'architecture' | 'debugging' | 'research' | 'config' | null;
+  distillable: 'yes' | 'maybe' | 'no' | null;
+  relevance: number;
+  domain: 'agent' | 'serialization' | 'prompt' | 'tooling' | 'other' | null;
   rated_at: number;
 }
 

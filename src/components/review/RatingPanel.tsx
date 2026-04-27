@@ -37,6 +37,28 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
     }
   }, [conversationId, conversation]);
 
+  const INTENTS = [
+    { id: 'refactor', label: 'Code Refactor' },
+    { id: 'architecture', label: 'Architecture' },
+    { id: 'debugging', label: 'Debugging' },
+    { id: 'research', label: 'Research' },
+    { id: 'config', label: 'Config' }
+  ] as const;
+
+  const DISTILLABLE = [
+    { id: 'yes', label: 'Yes' },
+    { id: 'maybe', label: 'Needs editing' },
+    { id: 'no', label: 'No' }
+  ] as const;
+
+  const DOMAINS = [
+    { id: 'agent', label: 'Agent Config' },
+    { id: 'serialization', label: 'Serialization' },
+    { id: 'prompt', label: 'Prompt Eng.' },
+    { id: 'tooling', label: 'Tooling' },
+    { id: 'other', label: 'Other' }
+  ] as const;
+
   const updateRating = (updates: Partial<ConversationRating>) => {
     const newRating = { 
       ...rating, 
@@ -75,183 +97,221 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
   if (!conversation) return null;
 
   return (
-    <div className="w-80 border-l border-border bg-card flex flex-col h-full p-6 space-y-8 overflow-y-auto scrollbar-none">
-      <div>
-        <h3 className="text-[10px] font-mono text-muted-foreground uppercase tracking-[0.2em] mb-6">Rating Controls</h3>
-        
-        <div className="space-y-8">
-          {/* Correctness */}
-          <div className="space-y-3">
-            <label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70">Correctness</label>
-            <div className="flex gap-1.5">
-              <Button
-                variant="outline"
-                className={cn(
-                  "flex-1 h-8 text-[10px] gap-1.5 transition-all border-border/30",
-                  rating.correctness === 'correct' 
-                    ? "bg-brand-orange/20 text-brand-orange border-brand-orange/40" 
-                    : "hover:bg-muted/50 text-muted-foreground"
-                )}
-                onClick={() => updateRating({ correctness: 'correct' })}
-              >
-                <Check className="w-3 h-3" /> Correct
-              </Button>
-              <Button
-                variant="outline"
-                className={cn(
-                  "flex-1 h-8 text-[10px] gap-1.5 transition-all border-border/30",
-                  rating.correctness === 'neutral' 
-                    ? "bg-muted text-foreground border-muted-foreground/30" 
-                    : "hover:bg-muted/50 text-muted-foreground"
-                )}
-                onClick={() => updateRating({ correctness: 'neutral' })}
-              >
-                <Minus className="w-3 h-3" /> N/A
-              </Button>
-              <Button
-                variant="outline"
-                className={cn(
-                  "flex-1 h-8 text-[10px] gap-1.5 transition-all border-border/30",
-                  rating.correctness === 'incorrect' 
-                    ? "bg-brand-pink/20 text-brand-pink border-brand-pink/40" 
-                    : "hover:bg-muted/50 text-muted-foreground"
-                )}
-                onClick={() => updateRating({ correctness: 'incorrect' })}
-              >
-                <X className="w-3 h-3" /> Fail
-              </Button>
-            </div>
-          </div>
-
-          {/* Tone */}
-          <div className="space-y-3">
-            <label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70">Tone of Voice</label>
-            <div className="flex gap-1.5">
-              <Button
-                variant="outline"
-                className={cn(
-                  "flex-1 h-8 text-[10px] gap-1.5 transition-all border-border/30",
-                  rating.tone === 'appropriate' 
-                    ? "bg-brand-orange/20 text-brand-orange border-brand-orange/40" 
-                    : "hover:bg-muted/50 text-muted-foreground"
-                )}
-                onClick={() => updateRating({ tone: 'appropriate' })}
-              >
-                <ThumbsUp className="w-3 h-3" /> Good
-              </Button>
-              <Button
-                variant="outline"
-                className={cn(
-                  "flex-1 h-8 text-[10px] gap-1.5 transition-all border-border/30",
-                  rating.tone === 'neutral' 
-                    ? "bg-muted text-foreground border-muted-foreground/30" 
-                    : "hover:bg-muted/50 text-muted-foreground"
-                )}
-                onClick={() => updateRating({ tone: 'neutral' })}
-              >
-                <Minus className="w-3 h-3" /> N/A
-              </Button>
-              <Button
-                variant="outline"
-                className={cn(
-                  "flex-1 h-8 text-[10px] gap-1.5 transition-all border-border/30",
-                  rating.tone === 'inappropriate' 
-                    ? "bg-brand-pink/20 text-brand-pink border-brand-pink/40" 
-                    : "hover:bg-muted/50 text-muted-foreground"
-                )}
-                onClick={() => updateRating({ tone: 'inappropriate' })}
-              >
-                <ThumbsDown className="w-3 h-3" /> Issues
-              </Button>
-            </div>
-          </div>
-
-          {/* Format */}
-          <div className="space-y-3">
-            <label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70">Format</label>
-            <div className="flex gap-1.5">
-              <Button
-                variant="outline"
-                className={cn(
-                  "flex-1 h-8 text-[10px] gap-1.5 transition-all border-border/30",
-                  rating.format === 'good' 
-                    ? "bg-brand-orange/20 text-brand-orange border-brand-orange/40" 
-                    : "hover:bg-muted/50 text-muted-foreground"
-                )}
-                onClick={() => updateRating({ format: 'good' })}
-              >
-                <FileText className="w-3 h-3" /> Good
-              </Button>
-              <Button
-                variant="outline"
-                className={cn(
-                  "flex-1 h-8 text-[10px] gap-1.5 transition-all border-border/30",
-                  rating.format === 'neutral' 
-                    ? "bg-muted text-foreground border-muted-foreground/30" 
-                    : "hover:bg-muted/50 text-muted-foreground"
-                )}
-                onClick={() => updateRating({ format: 'neutral' })}
-              >
-                <Minus className="w-3 h-3" /> N/A
-              </Button>
-              <Button
-                variant="outline"
-                className={cn(
-                  "flex-1 h-8 text-[10px] gap-1.5 transition-all border-border/30",
-                  rating.format === 'bad' 
-                    ? "bg-brand-pink/20 text-brand-pink border-brand-pink/40" 
-                    : "hover:bg-muted/50 text-muted-foreground"
-                )}
-                onClick={() => updateRating({ format: 'bad' })}
-              >
-                <AlertCircle className="w-3 h-3" /> Bad
-              </Button>
-            </div>
-          </div>
-
-          {/* Style Tags */}
-          <div className="space-y-3">
-            <label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70">Style Judgement</label>
-            <div className="grid grid-cols-2 gap-1.5">
-              {STYLE_OPTIONS.map((opt) => {
-                const Icon = opt.icon;
-                const isActive = rating.style_tags?.includes(opt.id);
-                return (
+    <div className="w-[450px] border-l border-border/10 bg-[#0a0a0a] flex flex-col h-full scrollbar-none">
+      <div className="flex-1 overflow-y-auto px-8 py-8 space-y-12 custom-scrollbar">
+        {/* Rating Controls */}
+        <section className="space-y-8">
+          <h3 className="text-[10px] font-bold text-muted-foreground/30 uppercase tracking-[0.3em]">Rating Controls</h3>
+          
+          <div className="space-y-6">
+            {/* Correctness */}
+            <div className="space-y-3">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Correctness</label>
+              <div className="flex gap-1">
+                {[
+                  { id: 'correct', label: '✓ Correct' },
+                  { id: 'neutral', label: '— N/A' },
+                  { id: 'fail', label: '✕ Fail' }
+                ].map((opt) => (
                   <Button
                     key={opt.id}
-                    variant="outline"
+                    variant="ghost"
                     className={cn(
-                      "h-8 text-[10px] justify-start gap-2 transition-all border-border/30",
-                      isActive 
-                        ? "bg-brand-pink/10 text-brand-pink border-brand-pink/30" 
-                        : "hover:bg-muted/50 text-muted-foreground"
+                      "flex-1 h-8 text-[10px] font-bold uppercase tracking-widest transition-all rounded-sm border border-transparent",
+                      rating.correctness === opt.id 
+                        ? "bg-brand-orange/10 text-brand-orange border-brand-orange/20" 
+                        : "text-muted-foreground/30 hover:text-muted-foreground/60 hover:bg-white/5"
                     )}
-                    onClick={() => toggleStyleTag(opt.id)}
+                    onClick={() => updateRating({ correctness: opt.id as any })}
                   >
-                    <Icon className="w-3 h-3" />
                     {opt.label}
                   </Button>
-                );
-              })}
+                ))}
+              </div>
+            </div>
+
+            {/* Tone */}
+            <div className="space-y-3">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Tone</label>
+              <div className="flex gap-1">
+                {[
+                  { id: 'good', label: '↑ Good' },
+                  { id: 'neutral', label: '— N/A' },
+                  { id: 'issues', label: '↓ Issues' }
+                ].map((opt) => (
+                  <Button
+                    key={opt.id}
+                    variant="ghost"
+                    className={cn(
+                      "flex-1 h-8 text-[10px] font-bold uppercase tracking-widest transition-all rounded-sm border border-transparent",
+                      rating.tone === opt.id 
+                        ? "bg-brand-orange/10 text-brand-orange border-brand-orange/20" 
+                        : "text-muted-foreground/30 hover:text-muted-foreground/60 hover:bg-white/5"
+                    )}
+                    onClick={() => updateRating({ tone: opt.id as any })}
+                  >
+                    {opt.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Format */}
+            <div className="space-y-3">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Format</label>
+              <div className="flex gap-1">
+                {[
+                  { id: 'good', label: 'Good' },
+                  { id: 'neutral', label: '— N/A' },
+                  { id: 'bad', label: 'Bad' }
+                ].map((opt) => (
+                  <Button
+                    key={opt.id}
+                    variant="ghost"
+                    className={cn(
+                      "flex-1 h-8 text-[10px] font-bold uppercase tracking-widest transition-all rounded-sm border border-transparent",
+                      rating.format === opt.id 
+                        ? "bg-brand-orange/10 text-brand-orange border-brand-orange/20" 
+                        : "text-muted-foreground/30 hover:text-muted-foreground/60 hover:bg-white/5"
+                    )}
+                    onClick={() => updateRating({ format: opt.id as any })}
+                  >
+                    {opt.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Style Tags */}
+            <div className="space-y-3">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Style Tags</label>
+              <div className="grid grid-cols-2 gap-1">
+                {STYLE_OPTIONS.map((opt) => {
+                  const isActive = rating.style_tags?.includes(opt.id);
+                  return (
+                    <Button
+                      key={opt.id}
+                      variant="ghost"
+                      className={cn(
+                        "h-8 text-[10px] font-bold uppercase tracking-widest justify-start px-3 rounded-sm border border-transparent transition-all",
+                        isActive 
+                          ? "bg-brand-pink/10 text-brand-pink border-brand-pink/20" 
+                          : "text-muted-foreground/30 hover:text-muted-foreground/60 hover:bg-white/5"
+                      )}
+                      onClick={() => toggleStyleTag(opt.id)}
+                    >
+                      {opt.label}
+                    </Button>
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
+        </section>
+
+        {/* Context */}
+        <section className="space-y-8">
+          <h3 className="text-[10px] font-bold text-muted-foreground/30 uppercase tracking-[0.3em]">Context</h3>
+          
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Primary intent?</label>
+              <div className="flex flex-wrap gap-1">
+                {INTENTS.map((opt) => (
+                  <Button
+                    key={opt.id}
+                    variant="ghost"
+                    className={cn(
+                      "h-7 text-[9px] font-bold uppercase tracking-widest rounded-sm px-2 border border-transparent transition-all",
+                      rating.intent === opt.id 
+                        ? "bg-brand-orange/10 text-brand-orange border-brand-orange/20" 
+                        : "text-muted-foreground/30 hover:text-muted-foreground/60 hover:bg-white/5"
+                    )}
+                    onClick={() => updateRating({ intent: opt.id as any })}
+                  >
+                    {opt.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Distillable into SKILL.md?</label>
+              <div className="flex gap-1">
+                {DISTILLABLE.map((opt) => (
+                  <Button
+                    key={opt.id}
+                    variant="ghost"
+                    className={cn(
+                      "flex-1 h-7 text-[9px] font-bold uppercase tracking-widest rounded-sm border border-transparent transition-all",
+                      rating.distillable === opt.id 
+                        ? "bg-brand-orange/10 text-brand-orange border-brand-orange/20" 
+                        : "text-muted-foreground/30 hover:text-muted-foreground/60 hover:bg-white/5"
+                    )}
+                    onClick={() => updateRating({ distillable: opt.id as any })}
+                  >
+                    {opt.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Skill relevance</label>
+                <span className="text-[10px] font-mono text-brand-orange font-bold tracking-tight">{rating.relevance || 0}</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={rating.relevance || 0}
+                onChange={(e) => updateRating({ relevance: parseInt(e.target.value) })}
+                className="w-full accent-brand-orange h-1.5 bg-[#1a1a1a] rounded-sm appearance-none cursor-pointer"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Skill domain</label>
+              <div className="flex flex-wrap gap-1">
+                {DOMAINS.map((opt) => (
+                  <Button
+                    key={opt.id}
+                    variant="ghost"
+                    className={cn(
+                      "h-7 text-[9px] font-bold uppercase tracking-widest rounded-sm px-2 border border-transparent transition-all",
+                      rating.domain === opt.id 
+                        ? "bg-brand-orange/10 text-brand-orange border-brand-orange/20" 
+                        : "text-muted-foreground/30 hover:text-muted-foreground/60 hover:bg-white/5"
+                    )}
+                    onClick={() => updateRating({ domain: opt.id as any })}
+                  >
+                    {opt.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Notes</label>
+              <textarea
+                className="w-full h-32 px-4 py-4 text-[11px] bg-[#111] border border-border/10 rounded-sm focus:outline-none focus:ring-1 focus:ring-brand-orange/40 text-foreground/80 placeholder:text-muted-foreground/20 resize-none transition-all font-mono leading-relaxed"
+                placeholder="Add annotations or failure analysis..."
+                value={notes}
+                onChange={handleNotesChange}
+              />
+            </div>
+          </div>
+        </section>
       </div>
 
-      <div className="flex-1 flex flex-col space-y-2">
-        <label className="text-xs font-medium text-muted-foreground">Notes</label>
-        <textarea
-          className="flex-1 w-full p-3 text-sm bg-muted/30 border border-border/50 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange/50 text-foreground placeholder:text-muted-foreground resize-none transition-all"
-          placeholder="Add annotations or failure analysis..."
-          value={notes}
-          onChange={handleNotesChange}
-        />
-      </div>
-
-      <div className="pt-4 border-t border-border/50">
-        <div className="flex justify-between text-[10px] font-mono text-muted-foreground uppercase">
+      <div className="p-8 border-t border-border/10 bg-[#0a0a0a]">
+        <div className="flex justify-between items-center text-[10px] font-bold font-mono text-muted-foreground/30 uppercase tracking-widest">
           <span>Shortcuts</span>
-          <span className="text-brand-pink">1-6, ←/→</span>
+          <div className="flex gap-4">
+            <span className="text-[#e56b3f]/60">1-6</span>
+            <span className="text-muted-foreground/10">← →</span>
+          </div>
         </div>
       </div>
     </div>

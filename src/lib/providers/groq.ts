@@ -39,11 +39,11 @@ export class GroqAdapter implements ModelProvider {
       const data = await response.json();
 
       return data.data.map((m: any) => ({
-        id: m.id,
-        name: m.id,
+        id: m.id || '',
+        name: m.id || 'Unknown Model',
         capabilities: {
           tools: true,
-          reasoning: m.id.includes('llama-3.1') || m.id.includes('70b'),
+          reasoning: m.id?.includes('llama-3.1') || m.id?.includes('70b') || false,
           structured: true,
         }
       }));

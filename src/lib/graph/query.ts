@@ -105,7 +105,7 @@ export function createExecutor(graph: ConvoGraph) {
       }
       if (topic_id) {
         const topic = graph.topics[topic_id];
-        if (topic) {
+        if (topic && topic.conversation_ids) {
           convos = convos.filter((c) => topic.conversation_ids.includes(c.id));
         }
       }
@@ -124,10 +124,10 @@ export function createExecutor(graph: ConvoGraph) {
     },
     topics: ({ min_size }: { min_size?: number }) => {
       let topics = Object.values(graph.topics);
-      if (min_size) topics = topics.filter((t) => t.conversation_ids.length >= min_size);
+      if (min_size) topics = topics.filter((t) => (t.conversation_ids?.length || 0) >= min_size);
       return topics.map((t) => ({
         ...t,
-        conversations: t.conversation_ids.map((id) => {
+        conversations: (t.conversation_ids || []).map((id) => {
           const c = graph.conversations[id];
           return { ...c, messages: c.messages.map(mId => graph.messages[mId]) };
         }),
@@ -138,7 +138,7 @@ export function createExecutor(graph: ConvoGraph) {
       if (quality) trajectories = trajectories.filter((t) => t.quality_signal === quality);
       return trajectories.map((t) => ({
         ...t,
-        conversations: t.conversation_ids.map((id) => {
+        conversations: (t.conversation_ids || []).map((id) => {
           const c = graph.conversations[id];
           return { ...c, messages: c.messages.map(mId => graph.messages[mId]) };
         }),
@@ -185,13 +185,13 @@ export function createExecutor(graph: ConvoGraph) {
         const topic = graph.topics[id];
         if (!topic) continue;
 
-        for (const cId of topic.conversation_ids) {
+        for (const cId of (topic.conversation_ids || [])) {
           const convo = graph.conversations[cId];
           if (!convo) continue;
           
           // Find topics linked to this conversation
           const linkedTopics = Object.values(graph.topics).filter(t => 
-            t.conversation_ids.includes(cId) && t.id !== id
+            t.conversation_ids?.includes(cId) && t.id !== id
           );
 
           for (const nextTopic of linkedTopics) {

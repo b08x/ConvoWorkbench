@@ -102,11 +102,11 @@ export class OllamaAdapter implements ModelProvider {
       }
       const data = await response.json();
       return data.models.map((m: any) => ({
-        id: m.name,
-        name: m.name,
+        id: m.name || '',
+        name: m.name || 'Unknown Model',
         capabilities: {
           tools: false,
-          reasoning: m.name.includes('llama3') || m.name.includes('mistral'),
+          reasoning: m.name?.includes('llama3') || m.name?.includes('mistral') || false,
           structured: true,
         }
       }));
