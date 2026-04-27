@@ -22,7 +22,7 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
   const conversation = conversationId ? state.conversations[conversationId] : null;
   
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
-  const [actionResult, setActionResult] = React.useState<{ type: 'summary' | 'search', content: string } | null>(null);
+  const [actionResult, setActionResult] = React.useState<{ type: 'summary' | 'search' | 'replace', content: string } | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [loadingText, setLoadingText] = React.useState('Analyzing');
 
@@ -42,7 +42,9 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
     return () => clearInterval(interval);
   }, [loading]);
 
-  const toggleSelection = (id: string) => {
+  const toggleSelection = (id: string, e: React.MouseEvent) => {
+    // If clicking a selection dot or specific indicator, handle it, 
+    // but here we toggle on click of the whole message
     const next = new Set(selectedIds);
     if (next.has(id)) next.delete(id);
     else next.add(id);
@@ -97,7 +99,7 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
     }
   };
 
-  const handleSearch = async () => {
+  const handleSearchAndReplace = async () => {
     if (selectedIds.size === 0) return;
     setLoading(true);
     try {
@@ -106,18 +108,18 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
 
       const selectedText = Array.from(selectedIds)
         .map(id => state.messages[id].content)
-        .join(' ');
+        .join('\n---\n');
 
       const prompt = {
-        system: "You are a retrieval assistant. Based on the selected text, identify key search terms or concepts that would be useful for finding related information in a large knowledge graph. Output a list of 5-7 specific keywords or short phrases.",
-        user: `Selected Text: ${selectedText}`
+        system: "You are a precision refactoring assistant. Based on the selected text, identify technical terms, aliases, or patterns that should be consistently replaced or standardized. Suggest a list of 'Search and Replace' pairs. Output in Markdown.",
+        user: `Selected Text:\n${selectedText}`
       };
 
       const result = await provider.generate(prompt, apiKeys['google'], 'gemini-3-flash-preview');
-      setActionResult({ type: 'search', content: result.text });
+      setActionResult({ type: 'replace', content: result.text });
     } catch (err) {
       console.error(err);
-      setActionResult({ type: 'search', content: `Error: ${err instanceof Error ? err.message : 'Failed to generate search terms'}` });
+      setActionResult({ type: 'replace', content: `Error: ${err instanceof Error ? err.message : 'Failed to generate replacement suggestions'}` });
     } finally {
       setLoading(false);
     }
@@ -127,7 +129,12 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
     if (!conversationId || !actionResult) return;
     
     const currentNotes = conversation?.notes || '';
-    const header = actionResult.type === 'summary' ? '### AI Summary' : '### Search Terms';
+    const headerMap = {
+      summary: '### AI Summary',
+      search: '### Search Terms',
+      replace: '### Refactor Recommendations'
+    };
+    const header = headerMap[actionResult.type];
     const newNotes = currentNotes 
       ? `${currentNotes}\n\n${header}\n${actionResult.content}`
       : `${header}\n${actionResult.content}`;
@@ -149,7 +156,7 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
   const filteredMessages = React.useMemo(() => {
     if (!conversation) return [];
     if (viewFilter === 'all') return conversation.messages;
-    return conversation.messages.filter(mId => state.messages[mId].role === viewFilter);
+    return conversation.messages.filter(mId => state.messages[mId].role === (viewFilter === 'assistant' ? 'assistant' : viewFilter));
   }, [conversation, viewFilter, state.messages]);
 
   if (!conversation) {
@@ -165,21 +172,63 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
 
   return (
     <div className="flex-1 flex flex-col h-full bg-[#0a0a0a] overflow-hidden relative">
-      <div className="p-8 border-b border-border/10 bg-[#0a0a0a]">
-        <h2 className="text-xl font-bold text-foreground leading-tight">{conversation.title || 'Untitled Conversation'}</h2>
-        <div className="flex gap-4 mt-6">
-          {(['all', 'user', 'assistant'] as const).map((v) => (
-            <button
-              key={v}
-              onClick={() => setViewFilter(v)}
-              className={cn(
-                "px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest transition-all",
-                viewFilter === v ? "text-brand-orange bg-brand-orange/10 rounded-sm" : "text-muted-foreground/40 hover:text-muted-foreground/70"
-              )}
-            >
-              {v === 'assistant' ? 'MODEL' : v}
-            </button>
-          ))}
+      <div className="p-8 border-b border-border/10 bg-[#0a0a0a] flex items-center justify-between">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-xl font-bold text-foreground leading-tight truncate">{conversation.title || 'Untitled Conversation'}</h2>
+          <div className="flex items-center gap-6 mt-6">
+            <div className="flex items-center gap-3">
+              <span className="text-[9px] font-mono text-muted-foreground/30 uppercase tracking-widest font-bold">View:</span>
+              <div className="flex gap-2">
+                {(['all', 'user', 'assistant'] as const).map((v) => (
+                  <button
+                    key={`view-${v}`}
+                    onClick={() => setViewFilter(v)}
+                    className={cn(
+                      "px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest transition-all border border-transparent",
+                      viewFilter === v ? "text-brand-orange bg-brand-orange/10 border-brand-orange/20 rounded-sm" : "text-muted-foreground/40 hover:text-muted-foreground/70"
+                    )}
+                  >
+                    {v === 'assistant' ? 'MODEL' : v}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="h-4 w-px bg-border/20" />
+
+            <div className="flex items-center gap-3">
+              <span className="text-[9px] font-mono text-muted-foreground/30 uppercase tracking-widest font-bold">Select:</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={selectAll}
+                  className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40 hover:text-brand-orange hover:bg-brand-orange/5 transition-all"
+                >
+                  All
+                </button>
+                <button
+                  onClick={selectUser}
+                  className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40 hover:text-brand-orange hover:bg-brand-orange/5 transition-all"
+                >
+                  User
+                </button>
+                <button
+                  onClick={selectAssistant}
+                  className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40 hover:text-brand-orange hover:bg-brand-orange/5 transition-all"
+                >
+                  Model
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3 ml-4">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/5 border border-border/10 rounded-sm">
+            <Clock className="w-3.5 h-3.5 text-muted-foreground/40" />
+            <span className="text-[10px] font-mono text-muted-foreground/60 whitespace-nowrap">
+              {conversation.messages.length} MSGS
+            </span>
+          </div>
         </div>
       </div>
 
@@ -194,10 +243,10 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
             <div 
               key={mId} 
               className={cn(
-                "max-w-4xl group relative transition-all",
-                isSelected && "bg-brand-orange/[0.02] -mx-4 px-4 rounded-sm ring-1 ring-brand-orange/10"
+                "max-w-4xl group relative transition-all cursor-pointer",
+                isSelected && "bg-brand-orange/[0.03] -mx-8 px-8 rounded-sm ring-1 ring-brand-orange/10"
               )}
-              onClick={() => toggleSelection(mId)}
+              onClick={(e) => toggleSelection(mId, e)}
             >
               <div className="space-y-4">
                 <div className={cn(
@@ -299,11 +348,11 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
               <Button 
                 variant="ghost" 
                 className="gap-2 text-xs text-zinc-100 hover:bg-brand-pink/10 hover:text-brand-pink h-8"
-                onClick={handleSearch}
+                onClick={handleSearchAndReplace}
                 disabled={loading}
               >
                 {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
-                {loading ? `${loadingText}...` : 'Search & Retrieve'}
+                {loading ? `${loadingText}...` : 'Search & Replace'}
               </Button>
               <Button 
                 variant="ghost" 
@@ -329,7 +378,7 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
               <div className="p-4 border-b border-border flex justify-between items-center bg-muted/30">
                 <h3 className="text-sm font-mono uppercase tracking-wider text-brand-orange flex items-center gap-2">
                   {actionResult.type === 'summary' ? <Sparkles className="w-4 h-4" /> : <Search className="w-4 h-4" />}
-                  {actionResult.type === 'summary' ? 'AI Summary' : 'Search & Retrieval Terms'}
+                  {actionResult.type === 'summary' ? 'AI Summary' : actionResult.type === 'search' ? 'Search Terms' : 'Search & Replace suggestions'}
                 </h3>
                 <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => setActionResult(null)}>
                   <X className="w-4 h-4" />
