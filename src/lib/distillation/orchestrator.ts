@@ -4,7 +4,6 @@ import { ModelProvider, TaskModelConfig } from '../../types/provider';
 export async function distillSkills(
   graph: ConvoGraph,
   getProvider: (id: string) => ModelProvider | undefined,
-  apiKeys: Record<string, string>,
   weakConfig: TaskModelConfig,
   strongConfig: TaskModelConfig,
   topicId: string
@@ -17,18 +16,15 @@ export async function distillSkills(
 
   const weakProvider = getProvider(weakConfig.providerId);
   const strongProvider = getProvider(strongConfig.providerId);
-  const weakKey = apiKeys[weakConfig.providerId];
-  const strongKey = apiKeys[strongConfig.providerId];
 
-  if (!weakProvider || !strongProvider || (!weakKey && weakConfig.providerId !== 'ollama') || (!strongKey && strongConfig.providerId !== 'ollama')) {
-    throw new Error('Missing provider or API key for distillation');
+  if (!weakProvider || !strongProvider) {
+    throw new Error('Missing provider for distillation');
   }
 
   // Step 1: Weak agent distillation
   const weakDraft = await consolidateLessons(
     trajectories, 
     weakProvider, 
-    weakKey, 
     weakConfig.modelId,
     'WEAK_AGENT_DRAFT'
   );
@@ -37,7 +33,6 @@ export async function distillSkills(
   const strongDraft = await consolidateLessons(
     trajectories, 
     strongProvider, 
-    strongKey, 
     strongConfig.modelId,
     'STRONG_AGENT_DRAFT'
   );
@@ -47,7 +42,6 @@ export async function distillSkills(
     weakDraft,
     strongDraft,
     strongProvider,
-    strongKey,
     strongConfig.modelId,
     graph.skills[topicId]?.content
   );
@@ -68,7 +62,6 @@ export async function distillSkills(
 async function consolidateLessons(
   trajectories: TrajectoryNode[],
   provider: ModelProvider,
-  apiKey: string,
   modelId: string,
   context: string,
   existingContent?: string
@@ -86,7 +79,7 @@ LESSON: ${t.lesson}
 `).join('\n---')}
 `;
 
-  const result = await provider.generate({ system, user }, apiKey, modelId);
+  const result = await provider.generate({ system, user }, undefined, modelId);
   return result.text;
 }
 
@@ -94,7 +87,6 @@ async function contrastiveConsolidate(
   weakDraft: string,
   strongDraft: string,
   provider: ModelProvider,
-  apiKey: string,
   modelId: string,
   existingContent?: string
 ): Promise<string> {
@@ -116,6 +108,6 @@ ${strongDraft}
 ${existingContent ? `EXISTING SKILL CONTENT:\n${existingContent}` : ''}
 `;
 
-  const result = await provider.generate({ system, user }, apiKey, modelId);
+  const result = await provider.generate({ system, user }, undefined, modelId);
   return result.text;
 }

@@ -5,16 +5,21 @@ import { generateText } from 'ai';
 export class GroqAdapter implements ModelProvider {
   id = 'groq';
   name = 'Groq';
-  supportsDirectBrowser = true;
+  supportsDirectBrowser = false;
 
-  async generate(prompt: GenerationPrompt, apiKey: string, modelId: string): Promise<GenerationResult> {
+  async generate(prompt: GenerationPrompt, apiKey?: string, modelId?: string): Promise<GenerationResult> {
+    const key = apiKey || (typeof process !== 'undefined' ? process.env.GROQ_API_KEY : undefined);
+    if (!key) throw new Error('Groq API key missing');
+
     const groq = createOpenAI({
-      apiKey,
+      apiKey: key,
       baseURL: 'https://api.groq.com/openai/v1',
     });
 
+    const model = modelId || 'llama-3.3-70b-versatile';
+
     const { text } = await generateText({
-      model: groq(modelId),
+      model: groq(model),
       system: prompt.system,
       prompt: prompt.user,
     });
@@ -22,16 +27,19 @@ export class GroqAdapter implements ModelProvider {
     return { text };
   }
 
-  async *stream(prompt: GenerationPrompt, apiKey: string, modelId: string): AsyncGenerator<string> {
+  async *stream(prompt: GenerationPrompt, apiKey?: string, modelId?: string): AsyncGenerator<string> {
     const result = await this.generate(prompt, apiKey, modelId);
     yield result.text;
   }
 
-  async fetchModels(apiKey: string): Promise<ModelInfo[]> {
+  async fetchModels(apiKey?: string): Promise<ModelInfo[]> {
+    const key = apiKey || (typeof process !== 'undefined' ? process.env.GROQ_API_KEY : undefined);
+    if (!key) throw new Error('Groq API key missing');
+
     try {
       const response = await fetch('https://api.groq.com/openai/v1/models', {
         headers: {
-          'Authorization': `Bearer ${apiKey}`
+          'Authorization': `Bearer ${key}`
         }
       });
 

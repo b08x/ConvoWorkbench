@@ -2,15 +2,19 @@ import { GenerationPrompt, GenerationResult, ModelProvider, ModelInfo } from '..
 import { GoogleGenAI, Modality } from "@google/genai";
 
 export class GeminiAdapter implements ModelProvider {
-  id = 'gemini';
-  name = 'Gemini';
-  supportsDirectBrowser = true;
+  id = 'google';
+  name = 'Google Gemini';
+  supportsDirectBrowser = false;
 
-  async generate(prompt: GenerationPrompt, apiKey: string, modelId: string): Promise<GenerationResult> {
-    const ai = new GoogleGenAI({ apiKey });
+  async generate(prompt: GenerationPrompt, apiKey?: string, modelId?: string): Promise<GenerationResult> {
+    const key = apiKey || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : undefined);
+    if (!key) throw new Error('Gemini API key missing');
+    
+    const ai = new GoogleGenAI({ apiKey: key });
+    const model = modelId || 'gemini-3-flash-preview';
     
     const response = await ai.models.generateContent({
-      model: modelId,
+      model: model,
       contents: prompt.user,
       config: {
         systemInstruction: prompt.system,
@@ -24,10 +28,15 @@ export class GeminiAdapter implements ModelProvider {
     };
   }
 
-  async *stream(prompt: GenerationPrompt, apiKey: string, modelId: string): AsyncGenerator<string> {
-    const ai = new GoogleGenAI({ apiKey });
+  async *stream(prompt: GenerationPrompt, apiKey?: string, modelId?: string): AsyncGenerator<string> {
+    const key = apiKey || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : undefined);
+    if (!key) throw new Error('Gemini API key missing');
+
+    const ai = new GoogleGenAI({ apiKey: key });
+    const model = modelId || 'gemini-3-flash-preview';
+
     const response = await ai.models.generateContentStream({
-      model: modelId,
+      model: model,
       contents: prompt.user,
       config: {
         systemInstruction: prompt.system,
@@ -39,8 +48,11 @@ export class GeminiAdapter implements ModelProvider {
     }
   }
 
-  async speak(text: string, apiKey: string): Promise<string> {
-    const ai = new GoogleGenAI({ apiKey });
+  async speak(text: string, apiKey?: string): Promise<string> {
+    const key = apiKey || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : undefined);
+    if (!key) throw new Error('Gemini API key missing');
+
+    const ai = new GoogleGenAI({ apiKey: key });
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
       contents: [{ parts: [{ text }] }],
@@ -59,7 +71,7 @@ export class GeminiAdapter implements ModelProvider {
     return base64Audio;
   }
 
-  async fetchModels(apiKey: string): Promise<ModelInfo[]> {
+  async fetchModels(apiKey?: string): Promise<ModelInfo[]> {
     return [
       {
         id: 'gemini-3-flash-preview',

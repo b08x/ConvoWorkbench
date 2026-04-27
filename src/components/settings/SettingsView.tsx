@@ -22,20 +22,16 @@ const TASK_LABELS: Record<TaskType, string> = {
 export function SettingsView() {
   const { 
     providers, 
-    apiKeys, 
     taskConfigs, 
     availableModels, 
-    setApiKey, 
     setTaskConfig, 
     refreshModels 
   } = useProvider();
 
   useEffect(() => {
-    // Refresh models for providers that have keys
+    // Refresh models for all providers (server handles auth)
     providers.forEach(p => {
-      if (apiKeys[p.id] || p.id === 'ollama') {
-        refreshModels(p.id);
-      }
+      refreshModels(p.id);
     });
   }, []);
 
@@ -49,7 +45,7 @@ export function SettingsView() {
       <Tabs defaultValue="providers" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 bg-muted/50 border border-border/50 p-1">
           <TabsTrigger value="providers" className="gap-2 data-[state=active]:bg-brand-orange data-[state=active]:text-brand-bg transition-all">
-            <Key className="w-4 h-4" /> Providers
+            <ShieldCheck className="w-4 h-4" /> Provider Status
           </TabsTrigger>
           <TabsTrigger value="tasks" className="gap-2 data-[state=active]:bg-brand-pink data-[state=active]:text-brand-bg transition-all">
             <Settings2 className="w-4 h-4" /> Task Models
@@ -61,44 +57,37 @@ export function SettingsView() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-foreground">
                 <ShieldCheck className="w-5 h-5 text-green-400" />
-                API Key Management
+                Server-Side Key Management
               </CardTitle>
               <CardDescription className="text-muted-foreground">
-                Keys are stored in sessionStorage and cleared on tab close.
+                API keys are securely handled on the server. You can configure them in the environment settings.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="bg-brand-orange/5 border border-brand-orange/20 rounded-md p-4 flex gap-3">
                 <AlertCircle className="w-5 h-5 text-brand-orange shrink-0" />
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  OpenRouter is recommended for browser-native apps. Other providers may require CORS proxies if not running locally.
+                  The client no longer handles or stores API keys directly. All requests are proxied through the secure backend for enhanced security and lazy injection.
                 </p>
               </div>
 
-              <div className="grid gap-6">
+              <div className="grid gap-4">
                 {providers.map((p) => (
-                  <div key={p.id} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor={`key-${p.id}`} className="text-foreground">{p.name} {p.id === 'ollama' ? 'URL' : 'API Key'}</Label>
-                      <Button 
-                        variant="ghost" 
-                        className="h-8 px-2 gap-1 text-xs text-muted-foreground hover:text-brand-orange hover:bg-brand-orange/10"
-                        onClick={() => refreshModels(p.id)}
-                      >
-                        <RefreshCw className="w-3 h-3" /> Refresh Models
-                      </Button>
+                  <div key={p.id} className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border/50">
+                    <div className="space-y-1">
+                      <Label className="text-foreground font-medium">{p.name}</Label>
+                      <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">
+                        {availableModels[p.id]?.length || 0} Models Active
+                      </p>
                     </div>
-                    <div className="flex gap-2">
-                      <Input
-                        id={`key-${p.id}`}
-                        type={p.id === 'ollama' ? 'text' : 'password'}
-                        placeholder={p.id === 'ollama' ? 'http://localhost:11434' : 'sk-...'}
-                        value={apiKeys[p.id] || ''}
-                        onChange={(e) => setApiKey(p.id, e.target.value)}
-                        className="bg-muted/50 border-border/50 focus:ring-brand-orange/50"
-                      />
-                      <Button variant="outline" className="border-border/50 hover:bg-muted" onClick={() => setApiKey(p.id, '')}>Clear</Button>
-                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="h-8 gap-1 text-xs border-border/50 hover:bg-brand-orange/10 hover:text-brand-orange hover:border-brand-orange/30"
+                      onClick={() => refreshModels(p.id)}
+                    >
+                      <RefreshCw className="w-3 h-3" /> Sync
+                    </Button>
                   </div>
                 ))}
               </div>

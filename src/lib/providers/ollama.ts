@@ -3,21 +3,24 @@ import { GenerationPrompt, GenerationResult, ModelProvider, ModelInfo } from '..
 export class OllamaAdapter implements ModelProvider {
   id = 'ollama';
   name = 'Ollama (Local)';
-  supportsDirectBrowser = true;
+  supportsDirectBrowser = false;
 
-  private getBaseUrl(apiKey: string) {
+  private getBaseUrl(apiKey?: string) {
     // For Ollama, the "apiKey" field can be used for the URL if the user wants to override localhost
-    return apiKey || 'http://localhost:11434';
+    if (apiKey) return apiKey;
+    if (typeof process !== 'undefined' && process.env.OLLAMA_BASE_URL) return process.env.OLLAMA_BASE_URL;
+    return 'http://localhost:11434';
   }
 
-  async generate(prompt: GenerationPrompt, apiKey: string, modelId: string): Promise<GenerationResult> {
+  async generate(prompt: GenerationPrompt, apiKey?: string, modelId?: string): Promise<GenerationResult> {
     const baseUrl = this.getBaseUrl(apiKey);
+    const model = modelId || 'llama3';
     try {
       const response = await fetch(`${baseUrl}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: modelId,
+          model: model,
           prompt: prompt.user,
           system: prompt.system,
           stream: false,
@@ -47,14 +50,15 @@ export class OllamaAdapter implements ModelProvider {
     }
   }
 
-  async *stream(prompt: GenerationPrompt, apiKey: string, modelId: string): AsyncGenerator<string> {
+  async *stream(prompt: GenerationPrompt, apiKey?: string, modelId?: string): AsyncGenerator<string> {
     const baseUrl = this.getBaseUrl(apiKey);
+    const model = modelId || 'llama3';
     try {
       const response = await fetch(`${baseUrl}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: modelId,
+          model: model,
           prompt: prompt.user,
           system: prompt.system,
           stream: true,
@@ -92,7 +96,7 @@ export class OllamaAdapter implements ModelProvider {
     }
   }
 
-  async fetchModels(apiKey: string): Promise<ModelInfo[]> {
+  async fetchModels(apiKey?: string): Promise<ModelInfo[]> {
     const baseUrl = this.getBaseUrl(apiKey);
     try {
       const response = await fetch(`${baseUrl}/api/tags`);

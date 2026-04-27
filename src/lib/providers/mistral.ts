@@ -5,13 +5,17 @@ import { generateText } from 'ai';
 export class MistralAdapter implements ModelProvider {
   id = 'mistral';
   name = 'Mistral';
-  supportsDirectBrowser = true;
+  supportsDirectBrowser = false;
 
-  async generate(prompt: GenerationPrompt, apiKey: string, modelId: string): Promise<GenerationResult> {
-    const mistral = createMistral({ apiKey });
+  async generate(prompt: GenerationPrompt, apiKey?: string, modelId?: string): Promise<GenerationResult> {
+    const key = apiKey || (typeof process !== 'undefined' ? process.env.MISTRAL_API_KEY : undefined);
+    if (!key) throw new Error('Mistral API key missing');
+
+    const mistral = createMistral({ apiKey: key });
+    const model = modelId || 'mistral-large-latest';
 
     const { text } = await generateText({
-      model: mistral(modelId),
+      model: mistral(model),
       system: prompt.system,
       prompt: prompt.user,
     });
@@ -19,16 +23,19 @@ export class MistralAdapter implements ModelProvider {
     return { text };
   }
 
-  async *stream(prompt: GenerationPrompt, apiKey: string, modelId: string): AsyncGenerator<string> {
+  async *stream(prompt: GenerationPrompt, apiKey?: string, modelId?: string): AsyncGenerator<string> {
     const result = await this.generate(prompt, apiKey, modelId);
     yield result.text;
   }
 
-  async fetchModels(apiKey: string): Promise<ModelInfo[]> {
+  async fetchModels(apiKey?: string): Promise<ModelInfo[]> {
+    const key = apiKey || (typeof process !== 'undefined' ? process.env.MISTRAL_API_KEY : undefined);
+    if (!key) throw new Error('Mistral API key missing');
+
     try {
       const response = await fetch('https://api.mistral.ai/v1/models', {
         headers: {
-          'Authorization': `Bearer ${apiKey}`
+          'Authorization': `Bearer ${key}`
         }
       });
 

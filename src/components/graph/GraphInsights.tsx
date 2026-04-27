@@ -11,7 +11,7 @@ import { cn } from '@/src/lib/utils';
 
 export function GraphInsights() {
   const { state } = useGraph();
-  const { getProvider, apiKeys } = useProvider();
+  const { getProvider } = useProvider();
   const [insight, setInsight] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [speaking, setSpeaking] = React.useState(false);
@@ -64,13 +64,12 @@ export function GraphInsights() {
     if (!insight || speaking) return;
     setSpeaking(true);
     try {
-      const provider = getProvider('gemini');
-      const apiKey = apiKeys['gemini'];
-      if (!apiKey || !provider.speak) throw new Error('TTS not available');
+      const provider = getProvider('google');
+      if (!provider || !provider.speak) throw new Error('TTS not available');
 
       // Strip markdown for better TTS
       const cleanText = insight.replace(/[#*`]/g, '').slice(0, 2000); // Limit length for TTS
-      const base64 = await provider.speak(cleanText, apiKey);
+      const base64 = await provider.speak(cleanText, undefined);
       await playAudio(base64);
     } catch (err) {
       console.error(err);
@@ -81,12 +80,8 @@ export function GraphInsights() {
   const generateInsights = async () => {
     setLoading(true);
     try {
-      const provider = getProvider('gemini');
-      const apiKey = apiKeys['gemini'];
-      
-      if (!apiKey) {
-        throw new Error('Gemini API key not found in Settings.');
-      }
+      const provider = getProvider('google');
+      if (!provider) throw new Error('Google provider not found');
 
       // Prepare a summary of the graph for Gemini
       const summary = {
@@ -107,7 +102,7 @@ export function GraphInsights() {
         4. Recommendations for further exploration or distillation.`
       };
 
-      const result = await provider.generate(prompt, apiKey, 'gemini-3-flash-preview');
+      const result = await provider.generate(prompt, undefined, 'gemini-3-flash-preview');
       setInsight(result.text);
     } catch (err) {
       console.error(err);
@@ -133,7 +128,7 @@ export function GraphInsights() {
     <Card className="border-border/50 bg-card/50 backdrop-blur-sm h-full flex flex-col overflow-hidden relative group">
       <CardHeader className="flex flex-row items-center justify-between py-3 z-10">
         <CardTitle className="text-sm font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-          <BrainCircuit className="w-4 h-4 text-brand-orange" /> Gemini Graph Insights
+          <BrainCircuit className="w-4 h-4 text-brand-orange" /> Google Gemini Graph Insights
         </CardTitle>
         <div className="flex gap-2">
           {insight && (
@@ -234,7 +229,7 @@ export function GraphInsights() {
           <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4 opacity-50">
             <BrainCircuit className="w-12 h-12 text-brand-orange" />
             <p className="text-sm text-muted-foreground max-w-xs">
-              Click generate to have Gemini analyze your ConvoGraph structure and provide strategic insights.
+              Click generate to have Google Gemini analyze your ConvoGraph structure and provide strategic insights.
             </p>
           </div>
         )}

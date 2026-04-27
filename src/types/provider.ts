@@ -24,10 +24,10 @@ export interface ModelProvider {
   id: string;
   name: string;
   supportsDirectBrowser: boolean;
-  generate(prompt: GenerationPrompt, apiKey: string, modelId: string): Promise<GenerationResult>;
-  stream(prompt: GenerationPrompt, apiKey: string, modelId: string): AsyncGenerator<string>;
-  fetchModels(apiKey: string): Promise<ModelInfo[]>;
-  speak?(text: string, apiKey: string): Promise<string>;
+  generate(prompt: GenerationPrompt, apiKey: string | undefined, modelId: string): Promise<GenerationResult>;
+  stream(prompt: GenerationPrompt, apiKey: string | undefined, modelId: string): AsyncGenerator<string>;
+  fetchModels(apiKey: string | undefined): Promise<ModelInfo[]>;
+  speak?(text: string, apiKey: string | undefined): Promise<string>;
 }
 
 export type TaskType = 

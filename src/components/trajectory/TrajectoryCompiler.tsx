@@ -9,7 +9,7 @@ import { cn } from '@/src/lib/utils';
 
 export function TrajectoryCompiler() {
   const { state, dispatch } = useGraph();
-  const { getProvider, apiKeys, taskConfigs } = useProvider();
+  const { getProvider, taskConfigs } = useProvider();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [compilationLogs, setCompilationLogs] = useState<CompilationProgress[]>([]);
@@ -17,9 +17,8 @@ export function TrajectoryCompiler() {
   const handleCompile = async () => {
     const config = taskConfigs.trajectory;
     const provider = getProvider(config.providerId);
-    const apiKey = apiKeys[config.providerId];
 
-    if (!provider || (!apiKey && config.providerId === 'ollama')) {
+    if (!provider) {
       // alert handled by provider logic usually, but let's be safe
     }
     
@@ -28,7 +27,7 @@ export function TrajectoryCompiler() {
     setSuccess(false);
     
     try {
-      const trajectories = await compileTrajectories(state, provider, apiKey, config, {}, (progress) => {
+      const trajectories = await compileTrajectories(state, provider, undefined, config, {}, (progress) => {
         setCompilationLogs(prev => [progress, ...prev]);
       });
       dispatch({ type: 'ADD_TRAJECTORIES', payload: trajectories });
