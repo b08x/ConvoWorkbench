@@ -56,22 +56,47 @@ Output a JSON array of objects:
     const user = `Analyze these conversations and group them into topics:
 ${batch.map(c => `ID: ${c.id}, Title: ${c.title}`).join('\n')}`;
 
-    const result = await provider.generate({ 
-      system, 
-      user,
-      schema: {
-        type: "array",
-        items: {
-          type: "object",
-          properties: {
-            id: { type: "string" },
-            label: { type: "string" },
-            conversation_ids: { type: "array", items: { type: "string" } }
-          },
-          required: ["id", "label", "conversation_ids"]
+    let result;
+    let retries = 0;
+    const MAX_RETRIES = 5;
+
+    while (true) {
+      try {
+        result = await provider.generate({ 
+          system, 
+          user,
+          schema: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                label: { type: "string" },
+                conversation_ids: { type: "array", items: { type: "string" } }
+              },
+              required: ["id", "label", "conversation_ids"]
+            }
+          }
+        }, apiKey, config.modelId);
+        break; // Success
+      } catch (err: any) {
+        const errorMsg = err.message || '';
+        const isQuotaError = 
+          errorMsg.includes('429') || 
+          errorMsg.includes('Quota exceeded') || 
+          errorMsg.includes('RESOURCE_EXHAUSTED') ||
+          errorMsg.includes('Rate limit exceeded');
+
+        if (isQuotaError && retries < MAX_RETRIES) {
+          retries++;
+          const waitTime = Math.pow(2, retries) * 2000 + Math.random() * 1000;
+          console.warn(`Quota exceeded for batch ${currentBatch}. Retrying in ${Math.round(waitTime/1000)}s... (Attempt ${retries}/${MAX_RETRIES})`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
         }
+        throw err; // Re-throw if not a quota error or max retries reached
       }
-    }, apiKey, config.modelId);
+    }
 
     try {
       let batchTopics = result.object;

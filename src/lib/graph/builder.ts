@@ -113,34 +113,47 @@ function safeJsonParse(json: string, fileName: string): any {
     trimmed = trimmed.slice(1);
   }
 
-  try {
-    return JSON.parse(trimmed);
-  } catch (e: any) {
-    console.error(`Initial JSON Parse Error in ${fileName}:`, e);
+  // Attempt to strip comments if initial parse fails
+  const attemptParse = (str: string) => {
+    try {
+      return JSON.parse(str);
+    } catch (e: any) {
+      return { error: e };
+    }
+  };
 
-    // If it's "Unexpected non-whitespace character after JSON", 
-    // it means we have a valid JSON followed by junk.
-    // We can try to find the last valid closing bracket/brace.
-    if (e.message.includes('Unexpected non-whitespace character after JSON') || 
-        e.message.includes('Unexpected token')) {
-      
-      // Try to find if there's a valid JSON block at the start
-      // This is a bit hacky but can recover from trailing junk
-      for (let i = trimmed.length - 1; i > 0; i--) {
-        const char = trimmed[i];
-        if (char === ']' || char === '}') {
-          try {
-            const potentialJson = trimmed.slice(0, i + 1);
-            return JSON.parse(potentialJson);
-          } catch (innerE) {
-            continue; // Keep looking for a valid end
-          }
-        }
+  let result = attemptParse(trimmed);
+  if (!result.error) return result;
+
+  // If failed, try stripping comments
+  // Removing comments via regex can be fragile but helpful for "dirty" exports
+  const withoutComments = trimmed
+    .replace(/\/\*[\s\S]*?\*\/|([^\\"]|^)\/\/.*$/gm, '$1')
+    .trim();
+  
+  result = attemptParse(withoutComments);
+  if (!result.error) return result;
+
+  // Fallback recovery for trailing junk
+  if (result.error.message.includes('Unexpected non-whitespace character') || 
+      result.error.message.includes('Unexpected token')) {
+    
+    for (let i = trimmed.length - 1; i > 0; i--) {
+      const char = trimmed[i];
+      if (char === ']' || char === '}') {
+        const potentialJson = trimmed.slice(0, i + 1);
+        const innerResult = attemptParse(potentialJson);
+        if (!innerResult.error) return innerResult;
+        
+        // Also try potentialJson without comments
+        const potentialWithoutComments = potentialJson.replace(/\/\*[\s\S]*?\*\/|([^\\"]|^)\/\/.*$/gm, '$1').trim();
+        const innerResult2 = attemptParse(potentialWithoutComments);
+        if (!innerResult2.error) return innerResult2;
       }
     }
-    
-    throw new Error(`Failed to parse ${fileName}: ${e.message}`);
   }
+  
+  throw new Error(`Failed to parse ${fileName}: ${result.error.message}`);
 }
 
 export function parseClaudeExport(
@@ -157,7 +170,7 @@ export function parseClaudeExport(
   let rawProjects = [];
   if (projectsJson) {
     try {
-      const parsed = JSON.parse(projectsJson);
+      const parsed = safeJsonParse(projectsJson, 'projects.json');
       rawProjects = Array.isArray(parsed) ? parsed : (parsed?.projects || []);
     } catch (e) {
       console.warn('Failed to parse projects.json');
@@ -168,7 +181,7 @@ export function parseClaudeExport(
   let rawMemories = [];
   if (memoriesJson) {
     try {
-      const parsed = JSON.parse(memoriesJson);
+      const parsed = safeJsonParse(memoriesJson, 'memories.json');
       rawMemories = Array.isArray(parsed) ? parsed : (parsed?.memories || []);
     } catch (e) {
       console.warn('Failed to parse memories.json');
