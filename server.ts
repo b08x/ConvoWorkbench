@@ -19,7 +19,20 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+  // Ensure all API errors return JSON
+  app.use((err: any, req: any, res: any, next: any) => {
+    if (req.path.startsWith('/api/')) {
+      console.error('API Error:', err);
+      return res.status(err.status || 500).json({ 
+        error: err.message || 'Internal Server Error',
+        details: err.stack
+      });
+    }
+    next(err);
+  });
 
   const providers = {
     google: new GeminiAdapter(),

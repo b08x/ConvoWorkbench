@@ -18,14 +18,27 @@ export class ProxyAdapter implements ModelProvider {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      const message = typeof errorData.error === 'object' 
-        ? errorData.error.message || JSON.stringify(errorData.error)
-        : errorData.error || 'Failed to generate';
+      let message = 'Failed to generate';
+      try {
+        const errorData = await response.json();
+        message = typeof errorData.error === 'object' 
+          ? errorData.error.message || JSON.stringify(errorData.error)
+          : errorData.error || 'Failed to generate';
+      } catch (e) {
+        // Response was not JSON (likely HTML error page)
+        const text = await response.text();
+        console.error('Non-JSON error response:', text);
+        message = `Server Error (${response.status}): ${text.slice(0, 100)}...`;
+      }
       throw new Error(message);
     }
 
-    return response.json();
+    try {
+      return await response.json();
+    } catch (e) {
+      const text = await response.text();
+      throw new Error(`Invalid JSON response: ${text.slice(0, 100)}...`);
+    }
   }
 
   async *stream(prompt: GenerationPrompt, apiKey: string | undefined, modelId: string): AsyncGenerator<string> {

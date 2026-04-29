@@ -13,9 +13,14 @@ export class GeminiAdapter implements ModelProvider {
     const ai = new GoogleGenAI({ apiKey: key });
     const model = modelId || 'gemini-3-flash-preview';
     
+    // Defensive content wrapping for the SDK
+    const contents = Array.isArray(prompt.user) 
+      ? prompt.user 
+      : [{ role: 'user', parts: [{ text: prompt.user }] }];
+
     const response = await ai.models.generateContent({
       model: model,
-      contents: prompt.user,
+      contents,
       config: {
         systemInstruction: prompt.system,
         responseMimeType: prompt.schema ? "application/json" : "text/plain",
