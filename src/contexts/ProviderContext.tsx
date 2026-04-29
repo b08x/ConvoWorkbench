@@ -16,6 +16,7 @@ const DEFAULT_CONFIGS: Record<TaskType, TaskModelConfig> = {
   distillation_weak: { providerId: 'google', modelId: 'gemini-3-flash-preview', parameters: { temperature: 0.5, maxTokens: 4000 } },
   distillation_strong: { providerId: 'google', modelId: 'gemini-3.1-pro-preview', parameters: { temperature: 0.5, maxTokens: 4000 } },
   retrieval: { providerId: 'google', modelId: 'gemini-3-flash-preview', parameters: { temperature: 0, maxTokens: 500 } },
+  insights: { providerId: 'google', modelId: 'gemini-3-flash-preview', parameters: { temperature: 0.7, maxTokens: 2000 } },
 };
 
 const ProviderContext = createContext<{

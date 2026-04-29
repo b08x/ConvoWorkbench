@@ -11,17 +11,19 @@ import { cn } from '@/src/lib/utils';
 
 export function GraphInsights() {
   const { state } = useGraph();
-  const { getProvider, apiKeys } = useProvider();
+  const { getProvider, apiKeys, taskConfigs } = useProvider();
   const [insight, setInsight] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [speaking, setSpeaking] = React.useState(false);
   const [currentIndex, setCurrentIndex] = React.useState(0);
 
+  const config = taskConfigs.insights;
+  const activeProvider = getProvider(config.providerId);
+
   const sections = React.useMemo(() => {
     if (!insight) return [];
     
     // Split by numbered list at start of line or markdown headings
-    // We look for a line break followed by a digit and a dot, or H1-H3 headings
     const parts = insight.split(/\n(?=\d+\.\s|#+\s)/);
     return parts.filter(p => p.trim().length > 0);
   }, [insight]);
@@ -64,12 +66,11 @@ export function GraphInsights() {
     if (!insight || speaking) return;
     setSpeaking(true);
     try {
-      const provider = getProvider('google');
-      if (!provider || !provider.speak) throw new Error('TTS not available');
+      if (!activeProvider || !activeProvider.speak) throw new Error('TTS not available for this provider');
 
       // Strip markdown for better TTS
       const cleanText = insight.replace(/[#*`]/g, '').slice(0, 2000); // Limit length for TTS
-      const base64 = await provider.speak(cleanText, apiKeys['google']);
+      const base64 = await activeProvider.speak(cleanText, apiKeys[config.providerId]);
       await playAudio(base64);
     } catch (err) {
       console.error(err);
@@ -80,10 +81,9 @@ export function GraphInsights() {
   const generateInsights = async () => {
     setLoading(true);
     try {
-      const provider = getProvider('google');
-      if (!provider) throw new Error('Google provider not found');
+      if (!activeProvider) throw new Error('Provider not found');
 
-      // Prepare a summary of the graph for Gemini
+      // Prepare a summary of the graph for the AI
       const summary = {
         stats: state.meta.stats,
         topics: (Object.values(state.topics) as TopicNode[]).map(t => ({ label: t.label, count: t.conversation_ids.length })),
@@ -102,7 +102,7 @@ export function GraphInsights() {
         4. Recommendations for further exploration or distillation.`
       };
 
-      const result = await provider.generate(prompt, apiKeys['google'], 'gemini-3-flash-preview');
+      const result = await activeProvider.generate(prompt, apiKeys[config.providerId], config.modelId);
       setInsight(result.text);
     } catch (err) {
       console.error(err);
@@ -128,7 +128,7 @@ export function GraphInsights() {
     <Card className="border-border/50 bg-card/50 backdrop-blur-sm h-full flex flex-col overflow-hidden relative group">
       <CardHeader className="flex flex-row items-center justify-between py-3 z-10">
         <CardTitle className="text-sm font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-          <BrainCircuit className="w-4 h-4 text-brand-orange" /> Google Gemini Graph Insights
+          <BrainCircuit className="w-4 h-4 text-brand-orange" /> {activeProvider?.name || 'AI'} Graph Insights
         </CardTitle>
         <div className="flex gap-2">
           {insight && (
@@ -229,7 +229,7 @@ export function GraphInsights() {
           <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4 opacity-50">
             <BrainCircuit className="w-12 h-12 text-brand-orange" />
             <p className="text-sm text-muted-foreground max-w-xs">
-              Click generate to have Google Gemini analyze your ConvoGraph structure and provide strategic insights.
+              Click generate to have {activeProvider?.name || 'AI'} analyze your ConvoGraph structure and provide strategic insights.
             </p>
           </div>
         )}

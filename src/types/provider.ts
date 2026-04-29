@@ -36,7 +36,8 @@ export type TaskType =
   | 'trajectory' 
   | 'distillation_weak' 
   | 'distillation_strong' 
-  | 'retrieval';
+  | 'retrieval'
+  | 'insights';
 
 export interface TaskModelConfig {
   providerId: string;

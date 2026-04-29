@@ -17,6 +17,7 @@ const TASK_LABELS: Record<TaskType, string> = {
   distillation_weak: 'Skill Distiller (Weak Agent)',
   distillation_strong: 'Skill Distiller (Strong Agent)',
   retrieval: 'Search & Retrieval',
+  insights: 'Graph Insights',
 };
 
 export function SettingsView() {
