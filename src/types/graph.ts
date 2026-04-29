@@ -94,6 +94,8 @@ export interface GraphMeta {
     rated_count: number;
     artifact_count: number;
     project_doc_count: number;
+    topic_count: number;
+    skill_count: number;
   };
 }
 

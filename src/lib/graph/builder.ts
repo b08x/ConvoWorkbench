@@ -105,6 +105,44 @@ export function createEmptyGraph(): ConvoGraph {
   };
 }
 
+function safeJsonParse(json: string, fileName: string): any {
+  let trimmed = json.trim();
+  
+  // Remove possible UTF-8 BOM
+  if (trimmed.charCodeAt(0) === 0xFEFF) {
+    trimmed = trimmed.slice(1);
+  }
+
+  try {
+    return JSON.parse(trimmed);
+  } catch (e: any) {
+    console.error(`Initial JSON Parse Error in ${fileName}:`, e);
+
+    // If it's "Unexpected non-whitespace character after JSON", 
+    // it means we have a valid JSON followed by junk.
+    // We can try to find the last valid closing bracket/brace.
+    if (e.message.includes('Unexpected non-whitespace character after JSON') || 
+        e.message.includes('Unexpected token')) {
+      
+      // Try to find if there's a valid JSON block at the start
+      // This is a bit hacky but can recover from trailing junk
+      for (let i = trimmed.length - 1; i > 0; i--) {
+        const char = trimmed[i];
+        if (char === ']' || char === '}') {
+          try {
+            const potentialJson = trimmed.slice(0, i + 1);
+            return JSON.parse(potentialJson);
+          } catch (innerE) {
+            continue; // Keep looking for a valid end
+          }
+        }
+      }
+    }
+    
+    throw new Error(`Failed to parse ${fileName}: ${e.message}`);
+  }
+}
+
 export function parseClaudeExport(
   conversationsJson: string,
   projectsJson?: string,
@@ -112,12 +150,7 @@ export function parseClaudeExport(
 ): ConvoGraph {
   const graph = createEmptyGraph();
   
-  let rawConversations;
-  try {
-    rawConversations = JSON.parse(conversationsJson);
-  } catch (e) {
-    throw new Error('Failed to parse conversations.json');
-  }
+  const rawConversations = safeJsonParse(conversationsJson, 'conversations.json');
   
   const conversations: ClaudeConversation[] = Array.isArray(rawConversations) ? rawConversations : [];
   
@@ -244,7 +277,7 @@ export function parseClaudeExport(
 
 export function parseChatGPTExport(conversationsJson: string): ConvoGraph {
   const graph = createEmptyGraph();
-  const conversations: ChatGPTConversation[] = JSON.parse(conversationsJson);
+  const conversations: ChatGPTConversation[] = safeJsonParse(conversationsJson, 'conversations.json');
 
   conversations.forEach((c) => {
     const messageIds: string[] = [];
@@ -321,12 +354,8 @@ export function parseMistralExport(conversationsJson: string): ConvoGraph {
   const graph = createEmptyGraph();
   let messages: MistralMessage[] = [];
   
-  try {
-    const parsed = JSON.parse(conversationsJson);
-    messages = Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
-    throw new Error('Failed to parse Mistral export JSON');
-  }
+  const parsed = safeJsonParse(conversationsJson, 'conversations.json');
+  messages = Array.isArray(parsed) ? parsed : [];
 
   // Sort by date ascending to ensure proper thread order
   messages.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
@@ -387,4 +416,6 @@ function updateStats(graph: ConvoGraph) {
   graph.meta.stats.rated_count = Object.values(graph.conversations).filter(c => c.rating !== null).length;
   graph.meta.stats.artifact_count = Object.keys(graph.artifacts).length;
   graph.meta.stats.project_doc_count = Object.keys(graph.project_docs).length;
+  graph.meta.stats.topic_count = Object.keys(graph.topics).length;
+  graph.meta.stats.skill_count = Object.keys(graph.skills).length;
 }
