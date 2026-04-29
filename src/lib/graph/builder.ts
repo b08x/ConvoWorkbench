@@ -126,10 +126,15 @@ function safeJsonParse(json: string, fileName: string): any {
   if (!result.error) return result;
 
   // If failed, try stripping comments
-  // Removing comments via regex can be fragile but helpful for "dirty" exports
-  const withoutComments = trimmed
-    .replace(/\/\*[\s\S]*?\*\/|([^\\"]|^)\/\/.*$/gm, '$1')
-    .trim();
+  // Removing comments via regex while respecting strings
+  const stripComments = (str: string) => {
+    return str.replace(/\\"|"(?:\\"|[^"])*"|(\/\*[\s\S]*?\*\/|\/\/.*$)/gm, (match, group1) => {
+      if (group1) return ""; // it's a comment
+      return match; // it's a string or escaped quote
+    });
+  };
+
+  const withoutComments = stripComments(trimmed).trim();
   
   result = attemptParse(withoutComments);
   if (!result.error) return result;
@@ -146,8 +151,7 @@ function safeJsonParse(json: string, fileName: string): any {
         if (!innerResult.error) return innerResult;
         
         // Also try potentialJson without comments
-        const potentialWithoutComments = potentialJson.replace(/\/\*[\s\S]*?\*\/|([^\\"]|^)\/\/.*$/gm, '$1').trim();
-        const innerResult2 = attemptParse(potentialWithoutComments);
+        const innerResult2 = attemptParse(stripComments(potentialJson).trim());
         if (!innerResult2.error) return innerResult2;
       }
     }

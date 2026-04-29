@@ -115,11 +115,13 @@ export function Graph3D({ graph }: Graph3DProps) {
       });
 
       topic.conversation_ids.forEach(convoId => {
-        links.push({
-          source: topic.id,
-          target: convoId,
-          type: 'topic-convo'
-        });
+        if (graph.conversations[convoId]) {
+          links.push({
+            source: topic.id,
+            target: convoId,
+            type: 'topic-convo'
+          });
+        }
       });
     });
 
@@ -145,11 +147,13 @@ export function Graph3D({ graph }: Graph3DProps) {
       });
 
       traj.conversation_ids.forEach(convoId => {
-        links.push({
-          source: traj.id,
-          target: convoId,
-          type: 'traj-convo'
-        });
+        if (graph.conversations[convoId]) {
+          links.push({
+            source: traj.id,
+            target: convoId,
+            type: 'traj-convo'
+          });
+        }
       });
     });
 
@@ -164,11 +168,13 @@ export function Graph3D({ graph }: Graph3DProps) {
       });
 
       skill.source_trajectory_ids.forEach(trajId => {
-        links.push({
-          source: skill.id,
-          target: trajId,
-          type: 'skill-traj'
-        });
+        if (graph.trajectories[trajId]) {
+          links.push({
+            source: skill.id,
+            target: trajId,
+            type: 'skill-traj'
+          });
+        }
       });
     });
 
