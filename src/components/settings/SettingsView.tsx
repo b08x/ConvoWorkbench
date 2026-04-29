@@ -18,6 +18,9 @@ const TASK_LABELS: Record<TaskType, string> = {
   distillation_strong: 'Skill Distiller (Strong Agent)',
   retrieval: 'Search & Retrieval',
   insights: 'Graph Insights',
+  summary: 'Node & Chat Summaries',
+  refactor: 'Refactor Recommendations',
+  search: 'Query Suggestions',
 };
 
 export function SettingsView() {
@@ -129,6 +132,7 @@ export function SettingsView() {
             <CardContent className="space-y-8">
               {(Object.keys(TASK_LABELS) as TaskType[]).map((task) => {
                 const config = taskConfigs[task];
+                if (!config) return null;
                 const models = availableModels[config.providerId] || [];
 
                 return (

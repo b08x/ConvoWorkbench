@@ -17,6 +17,9 @@ const DEFAULT_CONFIGS: Record<TaskType, TaskModelConfig> = {
   distillation_strong: { providerId: 'google', modelId: 'gemini-3.1-pro-preview', parameters: { temperature: 0.5, maxTokens: 4000 } },
   retrieval: { providerId: 'google', modelId: 'gemini-3-flash-preview', parameters: { temperature: 0, maxTokens: 500 } },
   insights: { providerId: 'google', modelId: 'gemini-3-flash-preview', parameters: { temperature: 0.7, maxTokens: 2000 } },
+  summary: { providerId: 'google', modelId: 'gemini-3-flash-preview', parameters: { temperature: 0.5, maxTokens: 1000 } },
+  refactor: { providerId: 'google', modelId: 'gemini-3-flash-preview', parameters: { temperature: 0.1, maxTokens: 1000 } },
+  search: { providerId: 'google', modelId: 'gemini-3-flash-preview', parameters: { temperature: 0.3, maxTokens: 500 } },
 };
 
 const ProviderContext = createContext<{
@@ -44,7 +47,7 @@ export function ProviderProvider({ children }: { children: ReactNode }) {
     const savedConfigs = sessionStorage.getItem('convo_workbench_task_configs');
     return {
       apiKeys: savedKeys ? JSON.parse(savedKeys) : {},
-      taskConfigs: savedConfigs ? JSON.parse(savedConfigs) : DEFAULT_CONFIGS,
+      taskConfigs: savedConfigs ? { ...DEFAULT_CONFIGS, ...JSON.parse(savedConfigs) } : DEFAULT_CONFIGS,
       availableModels: {},
     };
   });

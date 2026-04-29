@@ -216,9 +216,13 @@ export function parseClaudeExport(
   conversations.forEach((c) => {
     if (!c) return;
     const messageIds: string[] = [];
+    const seenMsgIds = new Set<string>();
+    
     c.chat_messages?.forEach((m, idx) => {
       if (!m) return;
       const mId = `claude-${m.uuid || `${c.uuid}-${idx}`}`;
+      if (seenMsgIds.has(mId)) return;
+      seenMsgIds.add(mId);
       let content = m.text || '';
       const artifact_ids: string[] = [];
 
@@ -377,10 +381,18 @@ export function parseMistralExport(conversationsJson: string): ConvoGraph {
   // Sort by date ascending to ensure proper thread order
   messages.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
-  // Group by chatId
+  // Group by chatId and deduplicate messages
   const chats = new Map<string, MistralMessage[]>();
+  const seenIds = new Set<string>();
+
   messages.forEach(m => {
-    if (!m.chatId) return;
+    if (!m.chatId || !m.id) return;
+    
+    // Check if we've already seen this message ID in this chat
+    const compositeId = `${m.chatId}-${m.id}`;
+    if (seenIds.has(compositeId)) return;
+    seenIds.add(compositeId);
+
     if (!chats.has(m.chatId)) chats.set(m.chatId, []);
     chats.get(m.chatId)!.push(m);
   });

@@ -19,8 +19,11 @@ export function Graph3D({ graph }: Graph3DProps) {
   const [summary, setSummary] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [speaking, setSpeaking] = React.useState(false);
-  const { getProvider, apiKeys } = useProvider();
+  const { getProvider, apiKeys, taskConfigs } = useProvider();
   const navigate = useNavigate();
+  
+  const summaryConfig = taskConfigs.summary || { providerId: 'google', modelId: 'gemini-3-flash-preview', parameters: { temperature: 0.5, maxTokens: 1000 } };
+  const activeProvider = getProvider(summaryConfig.providerId);
 
   const playAudio = async (base64: string) => {
     try {
@@ -55,8 +58,7 @@ export function Graph3D({ graph }: Graph3DProps) {
     setLoading(true);
     setSummary(null);
     try {
-      const provider = getProvider('google');
-      if (!provider) throw new Error('Provider not found');
+      if (!activeProvider) throw new Error('Provider not found');
 
       let context = '';
       if (node.type === 'conversation') {
@@ -75,7 +77,7 @@ export function Graph3D({ graph }: Graph3DProps) {
         user: `Node Data: ${context}`
       };
 
-      const result = await provider.generate(prompt, apiKeys['google'], 'gemini-3-flash-preview');
+      const result = await activeProvider.generate(prompt, apiKeys[summaryConfig.providerId], summaryConfig.modelId);
       setSummary(result.text);
     } catch (err) {
       console.error(err);
@@ -89,10 +91,9 @@ export function Graph3D({ graph }: Graph3DProps) {
     if (!summary || speaking) return;
     setSpeaking(true);
     try {
-      const provider = getProvider('google');
-      if (!provider || !provider.speak) throw new Error('TTS not available');
+      if (!activeProvider || !activeProvider.speak) throw new Error('TTS not available');
 
-      const base64 = await provider.speak(summary, apiKeys['google']);
+      const base64 = await activeProvider.speak(summary, apiKeys[summaryConfig.providerId]);
       await playAudio(base64);
     } catch (err) {
       console.error(err);

@@ -37,7 +37,10 @@ export type TaskType =
   | 'distillation_weak' 
   | 'distillation_strong' 
   | 'retrieval'
-  | 'insights';
+  | 'insights'
+  | 'summary'
+  | 'refactor'
+  | 'search';
 
 export interface TaskModelConfig {
   providerId: string;

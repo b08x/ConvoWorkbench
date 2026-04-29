@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useGraph } from '@/src/contexts/GraphContext';
 import { useProvider } from '@/src/contexts/ProviderContext';
+import { TaskType } from '@/src/types/provider';
 import { cn } from '@/src/lib/utils';
 import { 
   MessageSquare, User, Bot, Clock, Tag, CheckSquare, 
@@ -18,15 +19,19 @@ interface ConversationViewerProps {
 
 export function ConversationViewer({ conversationId }: ConversationViewerProps) {
   const { state, dispatch } = useGraph();
-  const { getProvider, apiKeys } = useProvider();
+  const { getProvider, apiKeys, taskConfigs } = useProvider();
   const conversation = conversationId ? state.conversations[conversationId] : null;
   
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
-  const [actionResult, setActionResult] = React.useState<{ type: 'summary' | 'search' | 'replace', content: string } | null>(null);
+  const [actionResult, setActionResult] = React.useState<{ type: 'summary' | 'search' | 'replace', content: string, providerName?: string } | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [loadingText, setLoadingText] = React.useState('Analyzing');
 
   const verbs = ['Synthesizing', 'Distilling', 'Analyzing', 'Retrieving', 'Contextualizing', 'Extracting'];
+
+  const getTaskConfig = (task: TaskType) => {
+    return taskConfigs[task] || { providerId: 'google', modelId: 'gemini-3-flash-preview', parameters: { temperature: 0.1, maxTokens: 1000 } };
+  };
 
   React.useEffect(() => {
     let interval: any;
@@ -77,8 +82,9 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
     if (selectedIds.size === 0) return;
     setLoading(true);
     try {
-      const provider = getProvider('google');
-      if (!provider) throw new Error('Google provider not found');
+      const config = getTaskConfig('summary');
+      const provider = getProvider(config.providerId);
+      if (!provider) throw new Error(`${config.providerId} provider not found`);
 
       const selectedMessages = Array.from(selectedIds)
         .map(id => state.messages[id])
@@ -89,8 +95,8 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
         user: selectedMessages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n')
       };
 
-      const result = await provider.generate(prompt, apiKeys['google'], 'gemini-3-flash-preview');
-      setActionResult({ type: 'summary', content: result.text });
+      const result = await provider.generate(prompt, apiKeys[config.providerId], config.modelId);
+      setActionResult({ type: 'summary', content: result.text, providerName: provider.name });
     } catch (err) {
       console.error(err);
       setActionResult({ type: 'summary', content: `Error: ${err instanceof Error ? err.message : 'Failed to summarize'}` });
@@ -103,8 +109,9 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
     if (selectedIds.size === 0) return;
     setLoading(true);
     try {
-      const provider = getProvider('google');
-      if (!provider) throw new Error('Google provider not found');
+      const config = getTaskConfig('refactor');
+      const provider = getProvider(config.providerId);
+      if (!provider) throw new Error(`${config.providerId} provider not found`);
 
       const selectedText = Array.from(selectedIds)
         .map(id => state.messages[id].content)
@@ -115,8 +122,8 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
         user: `Selected Text:\n${selectedText}`
       };
 
-      const result = await provider.generate(prompt, apiKeys['google'], 'gemini-3-flash-preview');
-      setActionResult({ type: 'replace', content: result.text });
+      const result = await provider.generate(prompt, apiKeys[config.providerId], config.modelId);
+      setActionResult({ type: 'replace', content: result.text, providerName: provider.name });
     } catch (err) {
       console.error(err);
       setActionResult({ type: 'replace', content: `Error: ${err instanceof Error ? err.message : 'Failed to generate replacement suggestions'}` });
@@ -129,8 +136,9 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
     if (selectedIds.size === 0) return;
     setLoading(true);
     try {
-      const provider = getProvider('google');
-      if (!provider) throw new Error('Google provider not found');
+      const config = getTaskConfig('search');
+      const provider = getProvider(config.providerId);
+      if (!provider) throw new Error(`${config.providerId} provider not found`);
 
       const selectedMessages = Array.from(selectedIds)
         .map(id => state.messages[id])
@@ -141,8 +149,8 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
         user: selectedMessages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n')
       };
 
-      const result = await provider.generate(prompt, apiKeys['google'], 'gemini-3-flash-preview');
-      setActionResult({ type: 'search', content: result.text });
+      const result = await provider.generate(prompt, apiKeys[config.providerId], config.modelId);
+      setActionResult({ type: 'search', content: result.text, providerName: provider.name });
     } catch (err) {
       console.error(err);
       setActionResult({ type: 'search', content: `Error: ${err instanceof Error ? err.message : 'Failed to generate queries'}` });
@@ -413,6 +421,7 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
               <div className="p-4 border-b border-border flex justify-between items-center bg-muted/30">
                 <h3 className="text-sm font-mono uppercase tracking-wider text-brand-orange flex items-center gap-2">
                   {actionResult.type === 'summary' ? <Sparkles className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+                  {actionResult.providerName ? `${actionResult.providerName} ` : ''}
                   {actionResult.type === 'summary' ? 'AI Summary' : actionResult.type === 'search' ? 'Search Terms' : 'Search & Replace suggestions'}
                 </h3>
                 <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => setActionResult(null)}>

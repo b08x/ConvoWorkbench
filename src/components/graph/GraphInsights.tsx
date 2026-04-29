@@ -17,8 +17,8 @@ export function GraphInsights() {
   const [speaking, setSpeaking] = React.useState(false);
   const [currentIndex, setCurrentIndex] = React.useState(0);
 
-  const config = taskConfigs.insights;
-  const activeProvider = getProvider(config.providerId);
+  const config = taskConfigs.insights || { providerId: 'google', modelId: 'gemini-3-flash-preview', parameters: { temperature: 0.7, maxTokens: 2000 } };
+  const activeProvider = getProvider(config?.providerId || 'google');
 
   const sections = React.useMemo(() => {
     if (!insight) return [];
