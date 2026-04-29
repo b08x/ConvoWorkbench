@@ -67,6 +67,16 @@ interface ChatGPTConversation {
   title: string;
   create_time: number;
   mapping: Record<string, ChatGPTMessage>;
+  current_node?: string;
+}
+
+// Mistral Format Types
+interface MistralMessage {
+  id: string;
+  chatId: string;
+  content: string;
+  role: 'user' | 'assistant';
+  createdAt: string;
 }
 
 export function createEmptyGraph(): ConvoGraph {
@@ -88,6 +98,8 @@ export function createEmptyGraph(): ConvoGraph {
         rated_count: 0,
         artifact_count: 0,
         project_doc_count: 0,
+        topic_count: 0,
+        skill_count: 0
       },
     },
   };
@@ -237,14 +249,19 @@ export function parseChatGPTExport(conversationsJson: string): ConvoGraph {
   conversations.forEach((c) => {
     const messageIds: string[] = [];
     
-    // ChatGPT uses a tree structure, we need to flatten it to a linear thread
-    // We'll find the leaf node and traverse up, then reverse
+    // ChatGPT uses a tree structure
+    // Prefer current_node if available, otherwise find a leaf
     const nodes = Object.values(c.mapping);
-    const leafNode = nodes.find(n => n.children.length === 0);
+    let targetNodeId = c.current_node;
     
-    if (!leafNode) return;
+    if (!targetNodeId) {
+      const leafNode = nodes.find(n => n.children.length === 0);
+      targetNodeId = leafNode?.id;
+    }
+    
+    if (!targetNodeId) return;
 
-    let current: ChatGPTMessage | undefined = leafNode;
+    let current: ChatGPTMessage | undefined = c.mapping[targetNodeId];
     const thread: ChatGPTMessage[] = [];
     while (current) {
       if (current.message && current.message.author.role !== 'system') {
@@ -254,14 +271,26 @@ export function parseChatGPTExport(conversationsJson: string): ConvoGraph {
     }
     thread.reverse();
 
-    thread.forEach((m, idx) => {
+    thread.forEach((m) => {
       if (!m.message) return;
       const mId = `chatgpt-${m.id}`;
+      
+      // Defensively parse content parts
+      let content = '';
+      if (m.message.content && Array.isArray(m.message.content.parts)) {
+        content = m.message.content.parts
+          .filter(p => typeof p === 'string' || (p && typeof p === 'object'))
+          .map(p => typeof p === 'string' ? p : JSON.stringify(p))
+          .join('\n');
+      } else if (m.message.content && (m.message.content as any).text) {
+        content = (m.message.content as any).text;
+      }
+      
       const node: MessageNode = {
         id: mId,
         source: 'chatgpt',
         role: m.message.author.role === 'user' ? 'user' : 'assistant',
-        content: m.message.content.parts.join('\n'),
+        content: content || 'Source formatting error in segment',
         timestamp: m.message.create_time ? m.message.create_time * 1000 : null,
         conversation_id: c.id,
         project_id: null,
@@ -281,6 +310,70 @@ export function parseChatGPTExport(conversationsJson: string): ConvoGraph {
       rating: null,
       notes: '',
       created_at: c.create_time ? c.create_time * 1000 : null,
+    };
+  });
+
+  updateStats(graph);
+  return graph;
+}
+
+export function parseMistralExport(conversationsJson: string): ConvoGraph {
+  const graph = createEmptyGraph();
+  let messages: MistralMessage[] = [];
+  
+  try {
+    const parsed = JSON.parse(conversationsJson);
+    messages = Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    throw new Error('Failed to parse Mistral export JSON');
+  }
+
+  // Sort by date ascending to ensure proper thread order
+  messages.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+  // Group by chatId
+  const chats = new Map<string, MistralMessage[]>();
+  messages.forEach(m => {
+    if (!m.chatId) return;
+    if (!chats.has(m.chatId)) chats.set(m.chatId, []);
+    chats.get(m.chatId)!.push(m);
+  });
+
+  chats.forEach((chatMessages, chatId) => {
+    const messageIds: string[] = [];
+    let firstUserContent = '';
+
+    chatMessages.forEach(m => {
+      const mId = `mistral-${m.id}`;
+      const node: MessageNode = {
+        id: mId,
+        source: 'mistral',
+        role: m.role,
+        content: m.content,
+        timestamp: new Date(m.createdAt).getTime(),
+        conversation_id: chatId,
+        project_id: null,
+        topic_ids: [],
+        skill_ids: [],
+      };
+      
+      if (!firstUserContent && m.role === 'user') {
+        firstUserContent = m.content;
+      }
+      
+      graph.messages[mId] = node;
+      messageIds.push(mId);
+    });
+
+    graph.conversations[chatId] = {
+      id: chatId,
+      source: 'mistral',
+      title: firstUserContent ? (firstUserContent.slice(0, 40) + (firstUserContent.length > 40 ? '...' : '')) : `Mistral Chat ${chatId.slice(0, 8)}`,
+      project_id: null,
+      messages: messageIds,
+      rating: null,
+      notes: '',
+      created_at: chatMessages.length > 0 ? new Date(chatMessages[0].createdAt).getTime() : null,
     };
   });
 

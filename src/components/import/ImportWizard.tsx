@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useGraph } from '@/src/contexts/GraphContext';
 import { useProvider } from '@/src/contexts/ProviderContext';
-import { parseClaudeExport, parseChatGPTExport } from '@/src/lib/graph/builder';
+import { parseClaudeExport, parseChatGPTExport, parseMistralExport } from '@/src/lib/graph/builder';
 import { extractTopics, TopicExtractionProgress } from '@/src/lib/graph/topic_extraction';
 import { ConversationNode } from '@/src/types/graph';
 import { Button } from '@/src/components/ui/button';
@@ -14,57 +14,104 @@ import { cn } from '@/src/lib/utils';
 export function ImportWizard() {
   const { dispatch } = useGraph();
   const { getProvider, apiKeys, taskConfigs } = useProvider();
-  const [source, setSource] = useState<'claude' | 'chatgpt' | null>(null);
-  const [files, setFiles] = useState<Record<string, string>>({});
+  const [source, setSource] = useState<'claude' | 'chatgpt' | 'mistral' | null>(null);
+  const [files, setFiles] = useState<Record<string, string[]>>({});
   const [status, setStatus] = useState<'idle' | 'parsing' | 'extracting' | 'success' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [shouldExtractTopics, setShouldExtractTopics] = useState(false);
   const [topicLogs, setTopicLogs] = useState<TopicExtractionProgress[]>([]);
 
-  const handleFileChange = (key: string, file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target?.result as string;
-      setFiles(prev => ({ ...prev, [key]: content }));
-    };
-    reader.readAsText(file);
+  const handleFileChange = (key: string, fileList: FileList) => {
+    const newFiles: string[] = [];
+    let processed = 0;
+    
+    Array.from(fileList).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        newFiles.push(content);
+        processed++;
+        if (processed === fileList.length) {
+          setFiles(prev => ({ ...prev, [key]: [...(prev[key] || []), ...newFiles] }));
+        }
+      };
+      reader.readAsText(file);
+    });
   };
 
   const handleImport = async () => {
     setStatus('parsing');
     setTopicLogs([]);
     try {
-      let graph;
-      if (source === 'claude') {
-        if (!files['conversations']) throw new Error('conversations.json is required');
-        graph = parseClaudeExport(files['conversations'], files['projects'], files['memories']);
-      } else if (source === 'chatgpt') {
-        if (!files['conversations']) throw new Error('conversations.json is required');
-        graph = parseChatGPTExport(files['conversations']);
-      } else {
-        throw new Error('Please select a source');
+      if (!files['conversations'] || files['conversations'].length === 0) {
+        throw new Error('At least one conversations file is required');
       }
 
-      if (shouldExtractTopics) {
+      let finalGraph: any = null;
+
+      const mergeGraphs = (base: any, incoming: any) => {
+        if (!base) return incoming;
+        const merged = {
+          ...base,
+          messages: { ...base.messages, ...incoming.messages },
+          conversations: { ...base.conversations, ...incoming.conversations },
+          projects: { ...base.projects, ...incoming.projects },
+        };
+        
+        // Recalculate stats based on actual keys to avoid double counting overlaps
+        merged.meta.stats = {
+          message_count: Object.keys(merged.messages).length,
+          conversation_count: Object.keys(merged.conversations).length,
+          project_count: Object.keys(merged.projects).length,
+          topic_count: Object.keys(merged.topics).length,
+          skill_count: base.meta.stats.skill_count + incoming.meta.stats.skill_count
+        };
+        
+        return merged;
+      };
+
+      for (let i = 0; i < files['conversations'].length; i++) {
+        const conversationsJson = files['conversations'][i];
+        let currentGraph;
+        
+        if (source === 'claude') {
+          currentGraph = parseClaudeExport(
+            conversationsJson, 
+            files['projects']?.[i], 
+            files['memories']?.[i]
+          );
+        } else if (source === 'chatgpt') {
+          currentGraph = parseChatGPTExport(conversationsJson);
+        } else if (source === 'mistral') {
+          currentGraph = parseMistralExport(conversationsJson);
+        } else {
+          throw new Error('Please select a source');
+        }
+        
+        finalGraph = mergeGraphs(finalGraph, currentGraph);
+      }
+
+      if (shouldExtractTopics && finalGraph) {
         setStatus('extracting');
         const config = taskConfigs.import;
         const provider = getProvider(config.providerId);
         const apiKey = apiKeys[config.providerId];
         
         if (provider) {
-          const conversations = Object.values(graph.conversations).slice(0, 50) as ConversationNode[]; // Limit for v1
+          const conversations = Object.values(finalGraph.conversations).slice(0, 100) as ConversationNode[]; // Increased limit for multi-import
           const topics = await extractTopics(conversations, provider, apiKey, config, (progress) => {
             setTopicLogs(prev => [progress, ...prev]);
           });
           topics.forEach(t => {
-            graph.topics[t.id] = t;
+            finalGraph.topics[t.id] = t;
           });
         }
       }
 
-      dispatch({ type: 'SET_GRAPH', payload: graph });
+      dispatch({ type: 'SET_GRAPH', payload: finalGraph });
       setStatus('success');
     } catch (err) {
+      console.error(err);
       setStatus('error');
       setError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -113,6 +160,24 @@ export function ImportWizard() {
             <p className="text-sm text-muted-foreground">Import conversations.json export from OpenAI.</p>
           </CardContent>
         </Card>
+
+        <Card 
+          className={cn(
+            "cursor-pointer transition-all border-border/50 bg-card/50 backdrop-blur-sm hover:border-brand-orange/50",
+            source === 'mistral' && "border-brand-orange ring-1 ring-brand-orange bg-brand-orange/5"
+          )}
+          onClick={() => setSource('mistral')}
+        >
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2 text-foreground">
+              <div className="w-8 h-8 rounded bg-[#f3d060] flex items-center justify-center text-black text-xs font-bold">M</div>
+              Mistral LeChat
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">Import conversation data from Mistral LeChat exports.</p>
+          </CardContent>
+        </Card>
       </div>
 
       {source && (
@@ -124,33 +189,57 @@ export function ImportWizard() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">conversations.json (Required)</label>
-                <input 
-                  type="file" 
-                  accept=".json"
-                  onChange={(e) => e.target.files?.[0] && handleFileChange('conversations', e.target.files[0])}
-                  className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 transition-all"
-                />
+                <div className="flex flex-col gap-2">
+                  <input 
+                    type="file" 
+                    accept=".json"
+                    multiple
+                    onChange={(e) => e.target.files && handleFileChange('conversations', e.target.files)}
+                    className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 transition-all"
+                  />
+                  {files['conversations']?.length > 0 && (
+                    <div className="text-[10px] font-mono text-muted-foreground uppercase flex items-center gap-1">
+                      <FileJson className="w-3 h-3" /> {files['conversations'].length} files selected
+                    </div>
+                  )}
+                </div>
               </div>
 
               {source === 'claude' && (
                 <>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">projects.json (Optional)</label>
-                    <input 
-                      type="file" 
-                      accept=".json"
-                      onChange={(e) => e.target.files?.[0] && handleFileChange('projects', e.target.files[0])}
-                      className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-muted file:text-foreground hover:file:bg-muted/80 transition-all"
-                    />
+                    <div className="flex flex-col gap-2">
+                      <input 
+                        type="file" 
+                        accept=".json"
+                        multiple
+                        onChange={(e) => e.target.files && handleFileChange('projects', e.target.files)}
+                        className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-muted file:text-foreground hover:file:bg-muted/80 transition-all"
+                      />
+                      {files['projects']?.length > 0 && (
+                        <div className="text-[10px] font-mono text-muted-foreground uppercase flex items-center gap-1">
+                          <FileJson className="w-3 h-3" /> {files['projects'].length} files selected
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">memories.json (Optional)</label>
-                    <input 
-                      type="file" 
-                      accept=".json"
-                      onChange={(e) => e.target.files?.[0] && handleFileChange('memories', e.target.files[0])}
-                      className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-muted file:text-foreground hover:file:bg-muted/80 transition-all"
-                    />
+                    <div className="flex flex-col gap-2">
+                      <input 
+                        type="file" 
+                        accept=".json"
+                        multiple
+                        onChange={(e) => e.target.files && handleFileChange('memories', e.target.files)}
+                        className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-muted file:text-foreground hover:file:bg-muted/80 transition-all"
+                      />
+                      {files['memories']?.length > 0 && (
+                        <div className="text-[10px] font-mono text-muted-foreground uppercase flex items-center gap-1">
+                          <FileJson className="w-3 h-3" /> {files['memories'].length} files selected
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </>
               )}

@@ -125,6 +125,32 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
     }
   };
 
+  const handleQuerySuggestions = async () => {
+    if (selectedIds.size === 0) return;
+    setLoading(true);
+    try {
+      const provider = getProvider('google');
+      if (!provider) throw new Error('Google provider not found');
+
+      const selectedMessages = Array.from(selectedIds)
+        .map(id => state.messages[id])
+        .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+      const prompt = {
+        system: "You are a retrieval expert. Analyze the provided conversation snippet and suggest 5-8 precise search queries that would help a user find related documents, similar technical problems, or relevant documentation in a knowledge base. Output as a bulleted list in Markdown.",
+        user: selectedMessages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n')
+      };
+
+      const result = await provider.generate(prompt, apiKeys['google'], 'gemini-3-flash-preview');
+      setActionResult({ type: 'search', content: result.text });
+    } catch (err) {
+      console.error(err);
+      setActionResult({ type: 'search', content: `Error: ${err instanceof Error ? err.message : 'Failed to generate queries'}` });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSaveToNotes = () => {
     if (!conversationId || !actionResult) return;
     
@@ -351,8 +377,17 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
                 onClick={handleSearchAndReplace}
                 disabled={loading}
               >
-                {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
+                {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Code className="w-3 h-3" />}
                 {loading ? `${loadingText}...` : 'Search & Replace'}
+              </Button>
+              <Button 
+                variant="ghost" 
+                className="gap-2 text-xs text-zinc-100 hover:bg-brand-orange/10 hover:text-brand-orange h-8"
+                onClick={handleQuerySuggestions}
+                disabled={loading}
+              >
+                {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
+                {loading ? `${loadingText}...` : 'Search Queries'}
               </Button>
               <Button 
                 variant="ghost" 
