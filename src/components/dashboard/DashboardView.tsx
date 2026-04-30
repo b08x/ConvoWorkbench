@@ -11,7 +11,7 @@ export function DashboardView() {
 
   const cards = [
     { title: 'Conversations', value: stats.conversation_count, icon: MessageSquare, color: 'text-brand-orange' },
-    { title: 'Messages', value: stats.message_count, icon: Network, color: 'text-brand-pink' },
+    { title: 'Messages', value: stats.message_count, icon: Network, color: 'text-brand-blue' },
     { title: 'Rated', value: stats.rated_count, icon: CheckCircle2, color: 'text-green-400' },
     { title: 'Skills Distilled', value: Object.keys(state.skills).length, icon: Zap, color: 'text-brand-orange' },
   ];
@@ -68,7 +68,7 @@ export function DashboardView() {
             <Button variant="outline" className="w-full justify-start gap-2 border-border/50 hover:bg-brand-orange/10 hover:text-brand-orange hover:border-brand-orange/50 transition-all" asChild>
               <a href="/import"><Upload className="w-4 h-4" /> Import New Data</a>
             </Button>
-            <Button variant="outline" className="w-full justify-start gap-2 border-border/50 hover:bg-brand-pink/10 hover:text-brand-pink hover:border-brand-pink/50 transition-all" asChild>
+            <Button variant="outline" className="w-full justify-start gap-2 border-border/50 hover:bg-brand-blue/10 hover:text-brand-blue hover:border-brand-blue/50 transition-all" asChild>
               <a href="/review"><MessageSquare className="w-4 h-4" /> Continue Reviewing</a>
             </Button>
             <Button variant="outline" className="w-full justify-start gap-2 border-border/50 hover:bg-brand-orange/10 hover:text-brand-orange hover:border-brand-orange/50 transition-all" asChild>

@@ -195,9 +195,9 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
 
   if (!conversation) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[#0a0a0a] text-muted-foreground/20">
+      <div className="flex-1 flex items-center justify-center bg-background text-muted-foreground/20">
         <div className="text-center">
-          <MessageSquare className="w-16 h-16 mx-auto mb-6 opacity-5" />
+          <MessageSquare className="w-16 h-16 mx-auto mb-6 opacity-10" />
           <p className="font-mono uppercase tracking-[0.3em] text-[10px]">Select Node to Inspect</p>
         </div>
       </div>
@@ -205,13 +205,13 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#0a0a0a] overflow-hidden relative">
-      <div className="p-8 border-b border-border/10 bg-[#0a0a0a] flex items-center justify-between">
+    <div className="flex-1 flex flex-col h-full bg-background overflow-hidden relative">
+      <div className="p-8 border-b border-border bg-card flex items-center justify-between">
         <div className="flex-1 min-w-0">
           <h2 className="text-xl font-bold text-foreground leading-tight truncate">{conversation.title || 'Untitled Conversation'}</h2>
           <div className="flex items-center gap-6 mt-6">
             <div className="flex items-center gap-3">
-              <span className="text-[9px] font-mono text-muted-foreground/30 uppercase tracking-widest font-bold">View:</span>
+              <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest font-bold">View:</span>
               <div className="flex gap-2">
                 {(['all', 'user', 'assistant'] as const).map((v) => (
                   <button
@@ -219,7 +219,7 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
                     onClick={() => setViewFilter(v)}
                     className={cn(
                       "px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest transition-all border border-transparent",
-                      viewFilter === v ? "text-brand-orange bg-brand-orange/10 border-brand-orange/20 rounded-sm" : "text-muted-foreground/40 hover:text-muted-foreground/70"
+                      viewFilter === v ? "text-brand-orange bg-brand-orange/10 border-brand-orange/20 rounded-sm" : "text-muted-foreground hover:text-foreground"
                     )}
                   >
                     {v === 'assistant' ? 'MODEL' : v}
@@ -228,26 +228,26 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
               </div>
             </div>
 
-            <div className="h-4 w-px bg-border/20" />
+            <div className="h-4 w-px bg-border" />
 
             <div className="flex items-center gap-3">
-              <span className="text-[9px] font-mono text-muted-foreground/30 uppercase tracking-widest font-bold">Select:</span>
+              <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest font-bold">Select:</span>
               <div className="flex gap-2">
                 <button
                   onClick={selectAll}
-                  className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40 hover:text-brand-orange hover:bg-brand-orange/5 transition-all"
+                  className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground hover:text-brand-orange hover:bg-brand-orange/5 transition-all"
                 >
                   All
                 </button>
                 <button
                   onClick={selectUser}
-                  className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40 hover:text-brand-orange hover:bg-brand-orange/5 transition-all"
+                  className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground hover:text-brand-orange hover:bg-brand-orange/5 transition-all"
                 >
                   User
                 </button>
                 <button
                   onClick={selectAssistant}
-                  className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40 hover:text-brand-orange hover:bg-brand-orange/5 transition-all"
+                  className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground hover:text-brand-orange hover:bg-brand-orange/5 transition-all"
                 >
                   Model
                 </button>
@@ -257,9 +257,9 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
         </div>
         
         <div className="flex items-center gap-3 ml-4">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/5 border border-border/10 rounded-sm">
-            <Clock className="w-3.5 h-3.5 text-muted-foreground/40" />
-            <span className="text-[10px] font-mono text-muted-foreground/60 whitespace-nowrap">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted border border-border rounded-sm">
+            <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+            <span className="text-[10px] font-mono text-muted-foreground whitespace-nowrap">
               {conversation.messages.length} MSGS
             </span>
           </div>
@@ -285,12 +285,12 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
               <div className="space-y-4">
                 <div className={cn(
                   "text-[10px] font-bold uppercase tracking-[0.2em] flex items-center gap-2",
-                  isUser ? "text-brand-pink/70" : "text-brand-orange/70"
+                  isUser ? "text-brand-blue" : "text-brand-orange"
                 )}>
                   {isUser ? 'USER' : 'ASSISTANT'}
                   {isSelected && <span className="h-1 w-1 rounded-full bg-brand-orange animate-pulse" />}
                 </div>
-                <div className="text-sm leading-relaxed text-foreground/80 font-sans selection:bg-brand-orange/30 whitespace-pre-wrap">
+                <div className="text-sm leading-relaxed text-foreground font-sans selection:bg-brand-orange/30 whitespace-pre-wrap">
                   <MessageContent 
                     content={message.content} 
                     artifactIds={message.artifact_ids} 
@@ -303,17 +303,17 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
         })}
 
         {Object.values(state.artifacts).filter(a => a.conversation_id === conversationId).length > 0 && (
-          <div className="max-w-4xl pt-12 pb-24 border-t border-border/10">
-            <h3 className="text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground/30 mb-8 flex items-center gap-2 font-bold">
+          <div className="max-w-4xl pt-12 pb-24 border-t border-border">
+            <h3 className="text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground mb-8 flex items-center gap-2 font-bold">
               <Layers className="w-3 h-3" /> Extracted Artifacts
             </h3>
             <div className="grid gap-6">
               {Object.values(state.artifacts)
                 .filter(a => a.conversation_id === conversationId)
                 .map(artifact => (
-                  <Card key={artifact.id} className="border-border/10 bg-[#111] rounded-sm overflow-hidden group hover:border-brand-orange/20 transition-all">
+                  <Card key={artifact.id} className="border-border bg-card rounded-sm overflow-hidden group hover:border-brand-orange/20 transition-all">
                     <div className="p-6 flex items-start gap-6">
-                      <div className="w-12 h-12 rounded-sm bg-muted/5 flex items-center justify-center text-muted-foreground/30 group-hover:text-brand-orange transition-colors">
+                      <div className="w-12 h-12 rounded-sm bg-muted flex items-center justify-center text-muted-foreground group-hover:text-brand-orange transition-colors">
                         {artifact.type === 'code' ? <Code className="w-6 h-6" /> : <FileText className="w-6 h-6" />}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -322,17 +322,17 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
                             {artifact.type}
                           </span>
                           {artifact.language && (
-                            <span className="text-[9px] font-mono font-bold uppercase text-muted-foreground/40 tracking-widest">
+                            <span className="text-[9px] font-mono font-bold uppercase text-muted-foreground tracking-widest">
                               {artifact.language}
                             </span>
                           )}
                         </div>
-                        <h4 className="text-base font-bold text-foreground/90 mb-6 font-mono tracking-tight">
+                        <h4 className="text-base font-bold text-foreground mb-6 font-mono tracking-tight">
                           {artifact.title || 'Untitled Artifact'}
                         </h4>
-                        <div className="bg-[#050505] border border-border/10 rounded-sm p-6 overflow-hidden">
+                        <div className="bg-background border border-border rounded-sm p-6 overflow-hidden">
                           <div className="max-h-96 overflow-y-auto custom-scrollbar">
-                            <div className="text-xs font-mono leading-relaxed text-foreground/70">
+                            <div className="text-xs font-mono leading-relaxed text-foreground/80">
                               <ReactMarkdown>
                                 {artifact.type === 'code' ? `\`\`\`${artifact.language || ''}\n${artifact.content}\n\`\`\`` : artifact.content}
                               </ReactMarkdown>
@@ -343,7 +343,7 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="text-[10px] font-bold uppercase tracking-widest gap-2 h-8 px-4 hover:bg-white/5"
+                            className="text-[10px] font-bold uppercase tracking-widest gap-2 h-8 px-4 hover:bg-muted"
                             onClick={() => navigator.clipboard.writeText(artifact.content)}
                           >
                             <Copy className="w-3.5 h-3.5" /> Copy
@@ -366,13 +366,13 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
             exit={{ y: 100, opacity: 0 }}
             className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50"
           >
-            <Card className="bg-brand-bg/90 backdrop-blur-md border-brand-orange/30 shadow-2xl p-2 flex items-center gap-2">
-              <div className="px-4 border-r border-border/50 mr-2">
+            <Card className="bg-card backdrop-blur-md border-brand-orange shadow-2xl p-2 flex items-center gap-2">
+              <div className="px-4 border-r border-border mr-2">
                 <span className="text-xs font-mono text-brand-orange">{selectedIds.size} Selected</span>
               </div>
               <Button 
                 variant="ghost" 
-                className="gap-2 text-xs text-zinc-100 hover:bg-brand-orange/10 hover:text-brand-orange h-8"
+                className="gap-2 text-xs text-foreground hover:bg-brand-orange/10 hover:text-brand-orange h-8"
                 onClick={handleSummarize}
                 disabled={loading}
               >
@@ -381,7 +381,7 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
               </Button>
               <Button 
                 variant="ghost" 
-                className="gap-2 text-xs text-zinc-100 hover:bg-brand-pink/10 hover:text-brand-pink h-8"
+                className="gap-2 text-xs text-foreground hover:bg-brand-green/10 hover:text-brand-green h-8"
                 onClick={handleSearchAndReplace}
                 disabled={loading}
               >
@@ -390,7 +390,7 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
               </Button>
               <Button 
                 variant="ghost" 
-                className="gap-2 text-xs text-zinc-100 hover:bg-brand-orange/10 hover:text-brand-orange h-8"
+                className="gap-2 text-xs text-foreground hover:bg-brand-orange/10 hover:text-brand-orange h-8"
                 onClick={handleQuerySuggestions}
                 disabled={loading}
               >
@@ -399,7 +399,7 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
               </Button>
               <Button 
                 variant="ghost" 
-                className="gap-2 text-xs text-zinc-400 hover:text-zinc-100 h-8"
+                className="gap-2 text-xs text-muted-foreground hover:text-foreground h-8"
                 onClick={clearSelection}
               >
                 <X className="w-3 h-3" />
@@ -417,8 +417,8 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
             exit={{ opacity: 0, scale: 0.95 }}
             className="absolute inset-0 z-[60] bg-background/80 backdrop-blur-sm p-12 flex items-center justify-center"
           >
-            <Card className="max-w-2xl w-full max-h-[80vh] flex flex-col border-brand-orange/30 bg-card shadow-2xl overflow-hidden">
-              <div className="p-4 border-b border-border flex justify-between items-center bg-muted/30">
+            <Card className="max-w-2xl w-full max-h-[80vh] flex flex-col border-brand-orange bg-card shadow-2xl overflow-hidden">
+              <div className="p-4 border-b border-border flex justify-between items-center bg-muted">
                 <h3 className="text-sm font-mono uppercase tracking-wider text-brand-orange flex items-center gap-2">
                   {actionResult.type === 'summary' ? <Sparkles className="w-4 h-4" /> : <Search className="w-4 h-4" />}
                   {actionResult.providerName ? `${actionResult.providerName} ` : ''}
@@ -428,13 +428,13 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
                   <X className="w-4 h-4" />
                 </Button>
               </div>
-              <div className="flex-1 overflow-auto p-6 prose prose-invert prose-sm max-w-none text-zinc-200">
+              <div className="flex-1 overflow-auto p-6 prose prose-stone prose-sm max-w-none text-foreground">
                 <ReactMarkdown>{actionResult.content}</ReactMarkdown>
               </div>
-              <div className="p-4 border-t border-border flex justify-end gap-2 bg-muted/30">
+              <div className="p-4 border-t border-border flex justify-end gap-2 bg-muted">
                 <Button 
                   variant="outline" 
-                  className="text-xs gap-2 h-8 text-zinc-300 border-zinc-700 hover:bg-zinc-800 hover:text-zinc-100"
+                  className="text-xs gap-2 h-8"
                   onClick={() => {
                     navigator.clipboard.writeText(actionResult.content);
                   }}
@@ -442,13 +442,13 @@ export function ConversationViewer({ conversationId }: ConversationViewerProps) 
                   <Copy className="w-3 h-3" /> Copy
                 </Button>
                 <Button 
-                  className="text-xs bg-brand-pink text-brand-bg hover:bg-brand-pink/90 h-8"
+                  className="text-xs bg-brand-green text-white hover:bg-brand-green/90 h-8"
                   onClick={handleSaveToNotes}
                 >
                   <FileText className="w-3 h-3" /> Save to Notes
                 </Button>
                 <Button 
-                  className="text-xs bg-brand-orange text-brand-bg hover:bg-brand-orange/90 h-8"
+                  className="text-xs bg-brand-orange text-white hover:bg-brand-orange/90 h-8"
                   onClick={() => setActionResult(null)}
                 >
                   Close

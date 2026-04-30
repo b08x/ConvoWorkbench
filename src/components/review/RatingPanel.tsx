@@ -97,16 +97,16 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
   if (!conversation) return null;
 
   return (
-    <div className="w-[450px] border-l border-border/10 bg-[#0a0a0a] flex flex-col h-full scrollbar-none">
+    <div className="w-[450px] border-l border-border bg-card flex flex-col h-full scrollbar-none">
       <div className="flex-1 overflow-y-auto px-8 py-8 space-y-12 custom-scrollbar">
         {/* Rating Controls */}
         <section className="space-y-8">
-          <h3 className="text-[10px] font-bold text-muted-foreground/30 uppercase tracking-[0.3em]">Rating Controls</h3>
+          <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.3em]">Rating Controls</h3>
           
           <div className="space-y-6">
             {/* Correctness */}
             <div className="space-y-3">
-              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Correctness</label>
+              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Correctness</label>
               <div className="flex gap-1">
                 {[
                   { id: 'correct', label: '✓ Correct' },
@@ -120,7 +120,7 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
                       "flex-1 h-8 text-[10px] font-bold uppercase tracking-widest transition-all rounded-sm border border-transparent",
                       rating.correctness === opt.id 
                         ? "bg-brand-orange/10 text-brand-orange border-brand-orange/20" 
-                        : "text-muted-foreground/30 hover:text-muted-foreground/60 hover:bg-white/5"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     )}
                     onClick={() => updateRating({ correctness: opt.id as any })}
                   >
@@ -132,7 +132,7 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
 
             {/* Tone */}
             <div className="space-y-3">
-              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Tone</label>
+              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Tone</label>
               <div className="flex gap-1">
                 {[
                   { id: 'good', label: '↑ Good' },
@@ -146,7 +146,7 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
                       "flex-1 h-8 text-[10px] font-bold uppercase tracking-widest transition-all rounded-sm border border-transparent",
                       rating.tone === opt.id 
                         ? "bg-brand-orange/10 text-brand-orange border-brand-orange/20" 
-                        : "text-muted-foreground/30 hover:text-muted-foreground/60 hover:bg-white/5"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     )}
                     onClick={() => updateRating({ tone: opt.id as any })}
                   >
@@ -158,7 +158,7 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
 
             {/* Format */}
             <div className="space-y-3">
-              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Format</label>
+              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Format</label>
               <div className="flex gap-1">
                 {[
                   { id: 'good', label: 'Good' },
@@ -172,7 +172,7 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
                       "flex-1 h-8 text-[10px] font-bold uppercase tracking-widest transition-all rounded-sm border border-transparent",
                       rating.format === opt.id 
                         ? "bg-brand-orange/10 text-brand-orange border-brand-orange/20" 
-                        : "text-muted-foreground/30 hover:text-muted-foreground/60 hover:bg-white/5"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     )}
                     onClick={() => updateRating({ format: opt.id as any })}
                   >
@@ -184,7 +184,7 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
 
             {/* Style Tags */}
             <div className="space-y-3">
-              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Style Tags</label>
+              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Style Tags</label>
               <div className="grid grid-cols-2 gap-1">
                 {STYLE_OPTIONS.map((opt) => {
                   const isActive = rating.style_tags?.includes(opt.id);
@@ -195,8 +195,8 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
                       className={cn(
                         "h-8 text-[10px] font-bold uppercase tracking-widest justify-start px-3 rounded-sm border border-transparent transition-all",
                         isActive 
-                          ? "bg-brand-pink/10 text-brand-pink border-brand-pink/20" 
-                          : "text-muted-foreground/30 hover:text-muted-foreground/60 hover:bg-white/5"
+                          ? "bg-brand-blue/10 text-brand-blue border-brand-blue/20" 
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
                       )}
                       onClick={() => toggleStyleTag(opt.id)}
                     >
@@ -211,11 +211,11 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
 
         {/* Context */}
         <section className="space-y-8">
-          <h3 className="text-[10px] font-bold text-muted-foreground/30 uppercase tracking-[0.3em]">Context</h3>
+          <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.3em]">Context</h3>
           
           <div className="space-y-6">
             <div className="space-y-3">
-              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Primary intent?</label>
+              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Primary intent?</label>
               <div className="flex flex-wrap gap-1">
                 {INTENTS.map((opt) => (
                   <Button
@@ -225,7 +225,7 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
                       "h-7 text-[9px] font-bold uppercase tracking-widest rounded-sm px-2 border border-transparent transition-all",
                       rating.intent === opt.id 
                         ? "bg-brand-orange/10 text-brand-orange border-brand-orange/20" 
-                        : "text-muted-foreground/30 hover:text-muted-foreground/60 hover:bg-white/5"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     )}
                     onClick={() => updateRating({ intent: opt.id as any })}
                   >
@@ -236,7 +236,7 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
             </div>
 
             <div className="space-y-3">
-              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Distillable into SKILL.md?</label>
+              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Distillable into SKILL.md?</label>
               <div className="flex gap-1">
                 {DISTILLABLE.map((opt) => (
                   <Button
@@ -246,7 +246,7 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
                       "flex-1 h-7 text-[9px] font-bold uppercase tracking-widest rounded-sm border border-transparent transition-all",
                       rating.distillable === opt.id 
                         ? "bg-brand-orange/10 text-brand-orange border-brand-orange/20" 
-                        : "text-muted-foreground/30 hover:text-muted-foreground/60 hover:bg-white/5"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     )}
                     onClick={() => updateRating({ distillable: opt.id as any })}
                   >
@@ -258,7 +258,7 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
 
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Skill relevance</label>
+                <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Skill relevance</label>
                 <span className="text-[10px] font-mono text-brand-orange font-bold tracking-tight">{rating.relevance || 0}</span>
               </div>
               <input
@@ -267,12 +267,12 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
                 max="100"
                 value={rating.relevance || 0}
                 onChange={(e) => updateRating({ relevance: parseInt(e.target.value) })}
-                className="w-full accent-brand-orange h-1.5 bg-[#1a1a1a] rounded-sm appearance-none cursor-pointer"
+                className="w-full accent-brand-orange h-1.5 bg-background border border-border rounded-sm appearance-none cursor-pointer"
               />
             </div>
 
             <div className="space-y-3">
-              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Skill domain</label>
+              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Skill domain</label>
               <div className="flex flex-wrap gap-1">
                 {DOMAINS.map((opt) => (
                   <Button
@@ -282,7 +282,7 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
                       "h-7 text-[9px] font-bold uppercase tracking-widest rounded-sm px-2 border border-transparent transition-all",
                       rating.domain === opt.id 
                         ? "bg-brand-orange/10 text-brand-orange border-brand-orange/20" 
-                        : "text-muted-foreground/30 hover:text-muted-foreground/60 hover:bg-white/5"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     )}
                     onClick={() => updateRating({ domain: opt.id as any })}
                   >
@@ -293,9 +293,9 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
             </div>
 
             <div className="space-y-3 pt-2">
-              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Notes</label>
+              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Notes</label>
               <textarea
-                className="w-full h-32 px-4 py-4 text-[11px] bg-[#111] border border-border/10 rounded-sm focus:outline-none focus:ring-1 focus:ring-brand-orange/40 text-foreground/80 placeholder:text-muted-foreground/20 resize-none transition-all font-mono leading-relaxed"
+                className="w-full h-32 px-4 py-4 text-[11px] bg-background border border-border rounded-sm focus:outline-none focus:ring-1 focus:ring-brand-orange/40 text-foreground placeholder:text-muted-foreground/30 resize-none transition-all font-mono leading-relaxed"
                 placeholder="Add annotations or failure analysis..."
                 value={notes}
                 onChange={handleNotesChange}
@@ -305,12 +305,12 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
         </section>
       </div>
 
-      <div className="p-8 border-t border-border/10 bg-[#0a0a0a]">
-        <div className="flex justify-between items-center text-[10px] font-bold font-mono text-muted-foreground/30 uppercase tracking-widest">
+      <div className="p-8 border-t border-border bg-muted">
+        <div className="flex justify-between items-center text-[10px] font-bold font-mono text-muted-foreground uppercase tracking-widest">
           <span>Shortcuts</span>
           <div className="flex gap-4">
-            <span className="text-[#e56b3f]/60">1-6</span>
-            <span className="text-muted-foreground/10">← →</span>
+            <span className="text-brand-orange/60">1-6</span>
+            <span className="text-muted-foreground/30">← →</span>
           </div>
         </div>
       </div>

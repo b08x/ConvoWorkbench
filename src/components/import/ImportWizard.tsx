@@ -145,14 +145,14 @@ export function ImportWizard() {
 
         <Card 
           className={cn(
-            "cursor-pointer transition-all border-border/50 bg-card/50 backdrop-blur-sm hover:border-brand-pink/50",
-            source === 'chatgpt' && "border-brand-pink ring-1 ring-brand-pink bg-brand-pink/5"
+            "cursor-pointer transition-all border-border/50 bg-card/50 backdrop-blur-sm hover:border-brand-green/50",
+            source === 'chatgpt' && "border-brand-green ring-1 ring-brand-green bg-brand-green/5"
           )}
           onClick={() => setSource('chatgpt')}
         >
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2 text-foreground">
-              <div className="w-8 h-8 rounded bg-brand-pink flex items-center justify-center text-brand-bg text-xs font-bold">G</div>
+              <div className="w-8 h-8 rounded bg-brand-green flex items-center justify-center text-white text-xs font-bold">G</div>
               ChatGPT
             </CardTitle>
           </CardHeader>
@@ -293,13 +293,13 @@ export function ImportWizard() {
 
                 <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                   {topicLogs.filter(log => log.topic).map((log, i) => (
-                    <div key={i} className="text-xs border-l-2 border-brand-pink/50 pl-3 py-1 space-y-1">
+                    <div key={i} className="text-xs border-l-2 border-brand-blue/50 pl-3 py-1 space-y-1">
                       <div className="flex items-center justify-between text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           {new Date(log.timestamp).toLocaleTimeString()}
                         </span>
-                        <span className="font-mono text-[10px] uppercase text-brand-pink">Topic Extracted</span>
+                        <span className="font-mono text-[10px] uppercase text-brand-blue">Topic Extracted</span>
                       </div>
                       <div className="font-semibold text-foreground flex items-center gap-1">
                         <Tag className="w-3 h-3 text-brand-orange" />

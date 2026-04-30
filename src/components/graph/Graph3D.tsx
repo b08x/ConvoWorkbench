@@ -112,7 +112,7 @@ export function Graph3D({ graph }: Graph3DProps) {
         name: topic.label,
         type: 'topic',
         val: 15,
-        color: '#e67e5f' // brand-orange
+        color: '#FF6103' // brand-orange
       });
 
       topic.conversation_ids.forEach(convoId => {
@@ -133,7 +133,7 @@ export function Graph3D({ graph }: Graph3DProps) {
         name: convo.title || 'Untitled',
         type: 'conversation',
         val: 8,
-        color: convo.rating ? (convo.rating.correctness === 'correct' ? '#4ade80' : '#f87171') : '#94a3b8'
+        color: convo.rating ? (convo.rating.correctness === 'correct' ? '#22c55e' : '#ef4444') : '#64748b'
       });
     });
 
@@ -144,7 +144,7 @@ export function Graph3D({ graph }: Graph3DProps) {
         name: 'Trajectory',
         type: 'trajectory',
         val: 12,
-        color: '#ff6b9d' // brand-pink
+        color: '#556B2F' // brand-green (mapped to trajectories)
       });
 
       traj.conversation_ids.forEach(convoId => {
@@ -165,7 +165,7 @@ export function Graph3D({ graph }: Graph3DProps) {
         name: skill.title,
         type: 'skill',
         val: 20,
-        color: '#ffffff'
+        color: '#0072CE' // brand-blue
       });
 
       skill.source_trajectory_ids.forEach(trajId => {
@@ -190,7 +190,7 @@ export function Graph3D({ graph }: Graph3DProps) {
     const material = new THREE.MeshPhongMaterial({ 
       color: node.color,
       transparent: true,
-      opacity: 0.8,
+      opacity: 0.9,
       shininess: 100
     });
     const sphere = new THREE.Mesh(geometry, material);
@@ -202,7 +202,7 @@ export function Graph3D({ graph }: Graph3DProps) {
       const glowMat = new THREE.MeshBasicMaterial({
         color: node.color,
         transparent: true,
-        opacity: 0.2
+        opacity: 0.15
       });
       const glow = new THREE.Mesh(glowGeo, glowMat);
       group.add(glow);
@@ -212,14 +212,14 @@ export function Graph3D({ graph }: Graph3DProps) {
   }, []);
 
   return (
-    <div className="w-full h-full bg-brand-bg rounded-xl overflow-hidden border border-border/50 relative">
+    <div className="w-full h-full bg-brand-bg rounded-xl overflow-hidden border border-border/70 relative">
       <ForceGraph3D
         ref={fgRef}
         graphData={data}
         nodeLabel="name"
         nodeThreeObject={nodeThreeObject}
-        linkWidth={1}
-        linkColor={() => 'rgba(255,255,255,0.1)'}
+        linkWidth={1.5}
+        linkColor={() => 'rgba(0,0,0,0.15)'}
         backgroundColor="rgba(0,0,0,0)"
         showNavInfo={false}
         onNodeClick={(node: any) => {

@@ -48,53 +48,57 @@ export function Sidebar() {
 
       <div className={cn("p-6 overflow-hidden whitespace-nowrap", collapsed && "p-4")}>
         {!collapsed ? (
-          <>
-            <h1 className="text-xl font-bold tracking-tight text-foreground">ConvoWorkbench</h1>
-            <p className="text-xs text-muted-foreground mt-1 font-mono uppercase tracking-widest">Trace2Skill Engine</p>
-          </>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-none bg-brand-orange flex items-center justify-center text-white text-xs font-bold shrink-0">CW</div>
+            <div>
+              <h1 className="text-sm font-bold tracking-tight text-foreground leading-none">CONVO<span className="text-brand-orange">WIZARD</span></h1>
+              <p className="text-[9px] text-muted-foreground mt-1 font-mono uppercase tracking-widest leading-none">Trace2Skill Engine</p>
+            </div>
+          </div>
         ) : (
-          <div className="w-8 h-8 rounded bg-brand-orange flex items-center justify-center text-brand-bg text-xs font-bold mx-auto">CW</div>
+          <div className="w-8 h-8 rounded-none bg-brand-orange flex items-center justify-center text-white text-xs font-bold mx-auto">CW</div>
         )}
       </div>
 
-      <nav className="flex-1 px-2 space-y-1">
+      <nav className="flex-1 px-2 space-y-1 mt-4">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             title={collapsed ? item.label : undefined}
             className={({ isActive }) => cn(
-              "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200",
-              collapsed ? "justify-center px-0" : "",
+              "flex items-center gap-3 px-3 py-2 text-sm font-medium transition-all duration-200 border-l-2",
+              collapsed ? "justify-center px-0 border-l-0" : "",
               isActive 
-                ? "bg-primary text-primary-foreground shadow-[0_0_15px_rgba(230,126,95,0.3)]" 
-                : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                ? "bg-brand-orange/10 text-brand-orange border-brand-orange" 
+                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground border-transparent"
             )}
           >
             <item.icon className="w-4 h-4 shrink-0" />
-            {!collapsed && <span>{item.label}</span>}
+            {!collapsed && <span className="text-xs uppercase tracking-widest font-bold">{item.label}</span>}
           </NavLink>
         ))}
       </nav>
 
       <div className={cn("p-4 border-t border-border", collapsed && "p-2")}>
         {!collapsed ? (
-          <div className="bg-muted/50 rounded-md p-3 border border-border/50">
-            <p className="text-[10px] text-muted-foreground font-mono uppercase">Session Stats</p>
-            <div className="mt-2 space-y-1">
-              <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">Rated</span>
-                <span className="font-medium text-foreground">0</span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">Skills</span>
-                <span className="font-medium text-foreground">0</span>
+          <div className="p-3">
+            <p className="text-[10px] text-muted-foreground font-mono uppercase font-bold tracking-wider">Session Stats</p>
+            <div className="mt-4 space-y-2">
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-[10px] uppercase font-bold tracking-tight">
+                  <span className="text-muted-foreground">Rated</span>
+                  <span className="text-brand-orange">0/0</span>
+                </div>
+                <div className="w-full bg-muted rounded-none h-1 overflow-hidden">
+                  <div className="w-0 h-full bg-brand-orange transition-all" />
+                </div>
               </div>
             </div>
           </div>
         ) : (
-          <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
-            <div className="w-1/3 h-full bg-brand-orange" />
+          <div className="w-full h-1 bg-muted rounded-none overflow-hidden">
+            <div className="w-0 h-full bg-brand-orange" />
           </div>
         )}
       </div>

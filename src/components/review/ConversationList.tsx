@@ -39,14 +39,14 @@ export function ConversationList({ selectedId, onSelect }: ConversationListProps
   });
 
   return (
-    <div className="w-96 border-r border-border bg-[#0a0a0a] flex flex-col h-full overflow-hidden">
-      <div className="p-4 border-b border-border/10 space-y-4">
+    <div className="w-96 border-r border-border bg-card flex flex-col h-full overflow-hidden">
+      <div className="p-4 border-b border-border space-y-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search conversations..."
-            className="w-full pl-9 pr-4 h-9 text-xs bg-[#1a1a1a] border border-border/10 rounded-sm focus:outline-none focus:ring-1 focus:ring-brand-orange/50 text-foreground placeholder:text-muted-foreground/50 transition-all font-mono"
+            className="w-full pl-9 pr-4 h-9 text-xs bg-background border border-border rounded-sm focus:outline-none focus:ring-1 focus:ring-brand-orange/50 text-foreground placeholder:text-muted-foreground/50 transition-all font-mono"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -60,8 +60,8 @@ export function ConversationList({ selectedId, onSelect }: ConversationListProps
               className={cn(
                 "px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all border",
                 filter === f 
-                  ? "bg-[#e56b3f] text-white border-[#e56b3f]" 
-                  : "bg-transparent text-muted-foreground border-border/10 hover:text-foreground hover:bg-white/5 whitespace-nowrap"
+                  ? "bg-brand-orange text-white border-brand-orange" 
+                  : "bg-transparent text-muted-foreground border-border hover:text-foreground hover:bg-accent whitespace-nowrap"
               )}
             >
               {f}
@@ -83,31 +83,31 @@ export function ConversationList({ selectedId, onSelect }: ConversationListProps
                 key={c.id}
                 onClick={() => onSelect(c.id)}
                 className={cn(
-                  "w-full text-left p-4 border-b border-border/10 transition-all relative",
-                  selectedId === c.id ? "bg-[#1a1a1a]" : "hover:bg-white/[0.02]"
+                  "w-full text-left p-4 border-b border-border transition-all relative",
+                  selectedId === c.id ? "bg-accent" : "hover:bg-accent/50"
                 )}
               >
                 <div className="flex justify-between items-center mb-1.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-[9px] font-mono font-bold text-muted-foreground/60 uppercase tracking-widest">{c.source}</span>
-                    <span className="text-[9px] font-mono text-muted-foreground/40 tracking-wider">• {date}</span>
+                    <span className="text-[9px] font-mono font-bold text-muted-foreground uppercase tracking-widest">{c.source}</span>
+                    <span className="text-[9px] font-mono text-muted-foreground/60 tracking-wider">• {date}</span>
                   </div>
                   <div className={cn(
                     "w-1.5 h-1.5 rounded-full",
                     !c.rating 
                       ? "bg-muted-foreground/30" 
                       : c.rating.correctness === 'correct' 
-                        ? "bg-green-500 shadow-[0_0_8px_#22c55e]" 
-                        : "bg-red-500 shadow-[0_0_8px_#ef4444]"
+                        ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" 
+                        : "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]"
                   )} />
                 </div>
                 <h4 className={cn(
                   "text-xs font-medium line-clamp-2 leading-relaxed mb-1 transition-colors",
-                  selectedId === c.id ? "text-brand-orange" : "text-foreground/90"
+                  selectedId === c.id ? "text-brand-orange" : "text-foreground"
                 )}>
                   {c.title || 'Untitled Conversation'}
                 </h4>
-                <p className="text-[10px] text-muted-foreground/40 line-clamp-2 leading-relaxed font-mono">
+                <p className="text-[10px] text-muted-foreground line-clamp-2 leading-relaxed font-mono">
                   {firstMsg?.content || 'No content...'}
                 </p>
                 
