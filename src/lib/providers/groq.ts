@@ -37,15 +37,16 @@ export class GroqAdapter implements ModelProvider {
     if (!key) throw new Error('Groq API key missing');
 
     try {
-      // In a browser environment, this fetch often fails due to CORS
-      // We'll wrap it and only log as a warning if it's not a CORS failure
       const response = await fetch('https://api.groq.com/openai/v1/models', {
         headers: {
           'Authorization': `Bearer ${key}`
         }
       });
 
-      if (!response.ok) throw new Error('Failed to fetch Groq models');
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Groq API error (${response.status}): ${text.slice(0, 100)}`);
+      }
       const data = await response.json();
 
       return data.data.map((m: any) => ({
@@ -58,7 +59,7 @@ export class GroqAdapter implements ModelProvider {
         }
       }));
     } catch (e) {
-      // Silently fall back if it looks like a CORS or network error in browser
+      console.warn('Groq model fetch failed. Using fallback list.', e);
       return [
         { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile', capabilities: { tools: true, reasoning: true, structured: true } },
         { id: 'llama-3.1-70b-versatile', name: 'Llama 3.1 70B Versatile', capabilities: { tools: true, reasoning: true, structured: true } },

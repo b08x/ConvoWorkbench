@@ -17,28 +17,25 @@ export class ProxyAdapter implements ModelProvider {
       })
     });
 
-    if (!response.ok) {
-      let message = 'Failed to generate';
-      try {
-        const errorData = await response.json();
-        message = typeof errorData.error === 'object' 
-          ? errorData.error.message || JSON.stringify(errorData.error)
-          : errorData.error || 'Failed to generate';
-      } catch (e) {
-        // Response was not JSON (likely HTML error page)
-        const text = await response.text();
-        console.error('Non-JSON error response:', text);
-        message = `Server Error (${response.status}): ${text.slice(0, 100)}...`;
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      if (!response.ok) {
+        throw new Error(`Server Error (${response.status}): ${text.slice(0, 100)}...`);
       }
+      throw new Error(`Invalid JSON response: ${text.slice(0, 100)}...`);
+    }
+
+    if (!response.ok) {
+      const message = typeof data.error === 'object' 
+        ? data.error.message || JSON.stringify(data.error)
+        : data.error || 'Failed to generate';
       throw new Error(message);
     }
 
-    try {
-      return await response.json();
-    } catch (e) {
-      const text = await response.text();
-      throw new Error(`Invalid JSON response: ${text.slice(0, 100)}...`);
-    }
+    return data;
   }
 
   async *stream(prompt: GenerationPrompt, apiKey: string | undefined, modelId: string): AsyncGenerator<string> {
@@ -54,10 +51,16 @@ export class ProxyAdapter implements ModelProvider {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      const message = typeof errorData.error === 'object' 
-        ? errorData.error.message || JSON.stringify(errorData.error)
-        : errorData.error || 'Failed to stream';
+      const text = await response.text();
+      let message = 'Failed to stream';
+      try {
+        const errorData = JSON.parse(text);
+        message = typeof errorData.error === 'object' 
+          ? errorData.error.message || JSON.stringify(errorData.error)
+          : errorData.error || 'Failed to stream';
+      } catch (e) {
+        message = `Server Error (${response.status}): ${text.slice(0, 100)}...`;
+      }
       throw new Error(message);
     }
 
@@ -93,11 +96,20 @@ export class ProxyAdapter implements ModelProvider {
 
   async fetchModels(_apiKey: string | undefined): Promise<ModelInfo[]> {
     const response = await fetch(`/api/llm/models/${this.id}`);
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to fetch models');
+    const text = await response.text();
+    
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      throw new Error(`Failed to parse models response correctly for ${this.id}: ${text.slice(0, 100)}...`);
     }
-    return response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || `Failed to fetch models: ${response.status}`);
+    }
+    
+    return data;
   }
 
   async speak(text: string, apiKey: string | undefined): Promise<string> {
@@ -111,15 +123,21 @@ export class ProxyAdapter implements ModelProvider {
       })
     });
 
+    const bodyText = await response.text();
+    let data;
+    try {
+      data = JSON.parse(bodyText);
+    } catch (e) {
+      throw new Error(`Invalid response from speak API: ${bodyText.slice(0, 100)}...`);
+    }
+
     if (!response.ok) {
-      const errorData = await response.json();
-      const message = typeof errorData.error === 'object' 
-        ? errorData.error.message || JSON.stringify(errorData.error)
-        : errorData.error || 'Failed to generate speech';
+      const message = typeof data.error === 'object' 
+        ? data.error.message || JSON.stringify(data.error)
+        : data.error || 'Failed to generate speech';
       throw new Error(message);
     }
 
-    const data = await response.json();
     return data.audio;
   }
 }

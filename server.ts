@@ -63,13 +63,20 @@ async function startServer() {
     try {
       const { providerId } = req.params;
       const provider = providers[providerId as keyof typeof providers] as ModelProvider;
-      if (!provider) return res.status(404).json({ error: "Provider not found" });
+      if (!provider) {
+        console.warn(`Provider not found: ${providerId}`);
+        return res.status(404).json({ error: "Provider not found" });
+      }
 
       const apiKey = getApiKey(providerId);
       const models = await provider.fetchModels(apiKey);
+      if (!models || !Array.isArray(models)) {
+        throw new Error(`Provider ${providerId} returned invalid models format`);
+      }
       res.json(models);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error(`Error in /api/llm/models/${req.params.providerId}:`, error);
+      res.status(500).json({ error: error.message || "Failed to fetch models" });
     }
   });
 
@@ -83,7 +90,8 @@ async function startServer() {
       const result = await provider.generate(prompt, apiKey, modelId);
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error(`Error in /api/llm/generate (${req.body.providerId}):`, error);
+      res.status(error.status || 500).json({ error: error.message || "Generation failed" });
     }
   });
 
@@ -107,11 +115,11 @@ async function startServer() {
       res.write('data: [DONE]\n\n');
       res.end();
     } catch (error: any) {
-      console.error("Stream error:", error);
+      console.error(`Stream error for ${req.body.providerId}:`, error);
       if (!res.headersSent) {
-          res.status(500).json({ error: error.message });
+          res.status(error.status || 500).json({ error: error.message || "Streaming failed" });
       } else {
-          res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+          res.write(`data: ${JSON.stringify({ error: error.message || "Streaming interrupted" })}\n\n`);
           res.end();
       }
     }
@@ -127,8 +135,14 @@ async function startServer() {
       const base64Audio = await provider.speak(text, apiKey);
       res.json({ audio: base64Audio });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error(`Speak error for ${req.body.providerId}:`, error);
+      res.status(error.status || 500).json({ error: error.message || "Speech generation failed" });
     }
+  });
+
+  // Handle common API 404s before Vite
+  app.all("/api/*", (req, res) => {
+    res.status(404).json({ error: `API route not found: ${req.method} ${req.path}` });
   });
 
   // Vite middleware for development

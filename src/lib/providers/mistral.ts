@@ -39,7 +39,10 @@ export class MistralAdapter implements ModelProvider {
         }
       });
 
-      if (!response.ok) throw new Error('Failed to fetch Mistral models');
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Mistral API error (${response.status}): ${text.slice(0, 100)}`);
+      }
       const data = await response.json();
 
       return data.data.map((m: any) => ({
@@ -52,7 +55,7 @@ export class MistralAdapter implements ModelProvider {
         }
       }));
     } catch (e) {
-      console.warn('Mistral model fetch failed (likely CORS). Using fallback list.', e);
+      console.warn('Mistral model fetch failed. Using fallback list.', e);
       return [
         { id: 'mistral-large-latest', name: 'Mistral Large (Latest)', capabilities: { tools: true, reasoning: true, structured: true } },
         { id: 'mistral-small-latest', name: 'Mistral Small (Latest)', capabilities: { tools: true, reasoning: false, structured: true } },
