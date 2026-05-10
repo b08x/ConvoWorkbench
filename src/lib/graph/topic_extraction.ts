@@ -106,7 +106,12 @@ ${batch.map(c => `ID: ${c.id}, Title: ${c.title}`).join('\n')}`;
         try {
           const jsonMatch = result.text.match(/\[[\s\S]*\]/);
           if (jsonMatch) {
-            batchTopics = JSON.parse(jsonMatch[0]);
+            // Strip comments before parsing
+            const cleanJson = jsonMatch[0].replace(/\\"|"(?:\\"|[^"])*"|(\/\*[\s\S]*?\*\/|\/\/.*$)/gm, (match, group1) => {
+              if (group1) return "";
+              return match;
+            });
+            batchTopics = JSON.parse(cleanJson);
           } else if (typeof result.object === 'object' && result.object !== null) {
             // Handle case where it returned { "topics": [...] }
             const values = Object.values(result.object);

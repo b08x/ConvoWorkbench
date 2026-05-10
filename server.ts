@@ -128,10 +128,19 @@ async function startServer() {
   app.post("/api/llm/speak", async (req, res) => {
     try {
       const { providerId, text, apiKey: clientApiKey } = req.body;
-      const provider = providers[providerId as keyof typeof providers] as ModelProvider;
-      if (!provider || !provider.speak) return res.status(404).json({ error: "Provider or speak method not found" });
+      let provider = providers[providerId as keyof typeof providers] as ModelProvider;
+      
+      // If provider not found or lacks speak, try falling back to google
+      if (!provider || !provider.speak) {
+        console.warn(`Provider ${providerId} does not support speak. Falling back to google.`);
+        provider = providers.google;
+      }
 
-      const apiKey = clientApiKey || getApiKey(providerId);
+      if (!provider || !provider.speak) {
+        return res.status(404).json({ error: "No available provider supports speak" });
+      }
+
+      const apiKey = clientApiKey || getApiKey(provider === providers.google ? 'google' : providerId);
       const base64Audio = await provider.speak(text, apiKey);
       res.json({ audio: base64Audio });
     } catch (error: any) {

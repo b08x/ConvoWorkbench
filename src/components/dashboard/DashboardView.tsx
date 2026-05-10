@@ -51,7 +51,7 @@ export function DashboardView() {
                 <div className="w-full bg-muted rounded-full h-2">
                   <div 
                     className="bg-brand-orange h-2 rounded-full transition-all shadow-[0_0_10px_rgba(230,126,95,0.5)]" 
-                    style={{ width: `${(stats.rated_count / stats.conversation_count) * 100}%` }}
+                    style={{ width: `${stats.conversation_count > 0 ? (stats.rated_count / stats.conversation_count) * 100 : 0}%` }}
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">{stats.rated_count} of {stats.conversation_count} conversations rated</p>
