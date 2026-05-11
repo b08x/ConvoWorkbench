@@ -259,16 +259,16 @@ export function RatingPanel({ conversationId }: RatingPanelProps) {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Skill relevance</label>
-                <span className="text-[10px] font-mono text-brand-orange font-bold tracking-tight">{Number.isNaN(rating.relevance) ? 0 : (rating.relevance || 0)}</span>
+                <span className="text-[10px] font-mono text-brand-orange font-bold tracking-tight">{(!rating.relevance || isNaN(Number(rating.relevance))) ? 0 : Number(rating.relevance)}</span>
               </div>
               <input
                 type="range"
                 min="0"
                 max="100"
-                value={Number.isNaN(rating.relevance) || rating.relevance === undefined ? 0 : rating.relevance}
+                value={(!rating.relevance || isNaN(Number(rating.relevance))) ? 0 : Number(rating.relevance)}
                 onChange={(e) => {
                   const val = parseInt(e.target.value);
-                  updateRating({ relevance: Number.isNaN(val) ? 0 : val });
+                  updateRating({ relevance: isNaN(val) ? 0 : val });
                 }}
                 className="w-full accent-brand-orange h-1.5 bg-background border border-border rounded-sm appearance-none cursor-pointer"
               />

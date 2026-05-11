@@ -64,8 +64,11 @@ export class OpenRouterAdapter implements ModelProvider {
           structured: true,
         }
       }));
-    } catch (e) {
-      console.warn('OpenRouter model fetch failed. Using fallback list.', e);
+    } catch (e: any) {
+      if (e.message?.includes('401')) {
+        throw e;
+      }
+      console.warn('OpenRouter model fetch failed. Using fallback list.');
       return [
         { id: 'google/gemini-2.0-flash-001', name: 'Gemini 2.0 Flash (OpenRouter)', capabilities: { tools: true, reasoning: true, structured: true } },
         { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet (OpenRouter)', capabilities: { tools: true, reasoning: true, structured: true } },

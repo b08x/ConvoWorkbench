@@ -58,8 +58,11 @@ export class GroqAdapter implements ModelProvider {
           structured: true,
         }
       }));
-    } catch (e) {
-      console.warn('Groq model fetch failed. Using fallback list.', e);
+    } catch (e: any) {
+      if (e.message?.includes('401')) {
+        throw e;
+      }
+      console.warn('Groq model fetch failed. Using fallback list.');
       return [
         { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile', capabilities: { tools: true, reasoning: true, structured: true } },
         { id: 'llama-3.1-70b-versatile', name: 'Llama 3.1 70B Versatile', capabilities: { tools: true, reasoning: true, structured: true } },
