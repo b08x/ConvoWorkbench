@@ -9,10 +9,13 @@ import {
   Download, 
   Settings,
   Menu,
-  ChevronLeft
+  ChevronLeft,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { Button } from '@/src/components/ui/button';
+import { useTheme } from '@/src/lib/useTheme';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -26,6 +29,7 @@ const navItems = [
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(true);
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <div 
@@ -78,6 +82,19 @@ export function Sidebar() {
             {!collapsed && <span className="text-xs uppercase tracking-widest font-bold">{item.label}</span>}
           </NavLink>
         ))}
+        
+        <button
+          onClick={toggleTheme}
+          title={collapsed ? "Toggle Theme" : undefined}
+          className={cn(
+            "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium transition-all duration-200 border-l-2 cursor-pointer",
+            collapsed ? "justify-center px-0 border-l-0" : "",
+            "text-muted-foreground hover:bg-muted/50 hover:text-foreground border-transparent"
+          )}
+        >
+          {theme === 'dark' ? <Sun className="w-4 h-4 shrink-0" /> : <Moon className="w-4 h-4 shrink-0" />}
+          {!collapsed && <span className="text-xs uppercase tracking-widest font-bold">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>}
+        </button>
       </nav>
 
       <div className={cn("p-4 border-t border-border", collapsed && "p-2")}>
